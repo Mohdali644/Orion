@@ -90,7 +90,7 @@ function ScoreArc({ score, size = 120, animate = true }: { score: number; size?:
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" role="img" aria-label={`Score: ${score} out of 100`}>
-        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="8" />
         <motion.circle
           cx={center} cy={center} r={radius}
           fill="none" stroke={colorHex} strokeWidth="8" strokeLinecap="round"
@@ -123,7 +123,7 @@ function MiniScoreRing({ score }: { score: number }) {
   return (
     <div className="inline-flex items-center gap-2">
       <svg width={size} height={size} className="-rotate-90 shrink-0" role="img" aria-label={`Score: ${score}`}>
-        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10" />
+        <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="10" />
         <circle
           cx={center} cy={center} r={radius}
           fill="none" stroke={colorHex} strokeWidth="10" strokeLinecap="round"
@@ -131,7 +131,7 @@ function MiniScoreRing({ score }: { score: number }) {
           strokeDashoffset={circumference - arcLength}
         />
       </svg>
-      <span style={{ fontFamily: 'var(--font-syne)', color: colorHex }} className="font-bold text-sm">{score}</span>
+          <span style={{ fontFamily: 'var(--font-syne)', color: colorHex }} className="font-bold text-sm" >{score}</span>
     </div>
   )
 }
@@ -154,22 +154,22 @@ function StatCard({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
-      className="group rounded-2xl p-6 hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-300 flex flex-col bg-white/5 border border-white/10 backdrop-blur-xl hover:border-white/20 relative overflow-hidden"
+      className="group rounded-2xl p-6 hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-200/30 transition-all duration-300 flex flex-col bg-white/60 border border-blue-100/40 backdrop-blur-md hover:bg-white/80 hover:border-blue-200/60 relative overflow-hidden"
     >
-      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-50/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       <div className="relative z-10 flex items-center justify-between mb-3">
-        <h3 className="text-xs font-semibold text-[#7da3c4] uppercase tracking-widest">{label}</h3>
-        <Icon className="w-5 h-5 text-[#0ff]" />
+        <h3 className="text-xs font-semibold text-[#6b7280] uppercase tracking-widest">{label}</h3>
+        <Icon className="w-5 h-5 text-[#2563eb]" />
       </div>
       {children ? (
         children
       ) : donut ? (
         <div className="flex items-end justify-between mt-2 relative z-10">
-          <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-4xl bg-gradient-to-r from-[#e1e8ed] to-[#a8c5dd] bg-clip-text text-transparent">{value}</span>
+          <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-4xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">{value}</span>
           <MiniDonut score={donut.score} />
         </div>
       ) : (
-        <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-4xl bg-gradient-to-r from-[#e1e8ed] to-[#a8c5dd] bg-clip-text text-transparent mt-2 relative z-10">{value}</span>
+        <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-4xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent mt-2 relative z-10">{value}</span>
       )}
     </motion.div>
   )
@@ -189,7 +189,7 @@ function MiniDonut({ score }: { score: number }) {
 
   return (
     <svg width={size} height={size} className="-rotate-90 shrink-0" viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="10" />
+      <circle cx={center} cy={center} r={radius} fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="10" />
       <motion.circle
         cx={center} cy={center} r={radius}
         fill="none" stroke={colorHex} strokeWidth="10" strokeLinecap="round"
@@ -210,14 +210,14 @@ function NavBar() {
   const pathname = "/"
 
   return (
-    <nav className="sticky top-0 z-50 h-16 flex items-center justify-between px-4 md:px-8 w-full border-b border-white/5 bg-[rgba(10,14,23,0.7)] backdrop-blur-xl">
+    <nav className="sticky top-0 z-50 h-16 flex items-center justify-between px-4 md:px-8 w-full border-b border-blue-100/40 bg-white/60 backdrop-blur-md">
       {/* Left: Logo + nav links */}
       <div className="flex items-center gap-8">
         <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-[#0ff] via-[#0cf] to-[#09f] rounded-lg flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:shadow-cyan-500/40 transition-all">
-            <Zap className="w-5 h-5 text-[#0a0e17] font-bold" />
+          <div className="w-9 h-9 bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all">
+            <Zap className="w-5 h-5 text-white font-bold" />
           </div>
-          <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-xl bg-gradient-to-r from-[#e1e8ed] via-[#a8c5dd] to-[#7da3c4] bg-clip-text text-transparent">
+          <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
             Orion
           </span>
         </Link>
@@ -237,8 +237,8 @@ function NavBar() {
                 className={cn(
                   "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative",
                   isActive
-                    ? "text-[#0ff] bg-white/5"
-                    : "text-[#a8c5dd] hover:text-[#e1e8ed] hover:bg-white/5"
+                    ? "text-[#2563eb] bg-blue-50"
+                    : "text-[#6b7280] hover:text-[#374151] hover:bg-blue-50/50"
                 )}
               >
                 {label}
@@ -251,15 +251,15 @@ function NavBar() {
       {/* Right: actions */}
       <div className="flex items-center gap-3">
         {/* Active runs indicator */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-          <span className="w-2 h-2 rounded-full bg-[#0ff] animate-pulse" />
-          <span className="text-xs text-[#a8c5dd] font-medium">Live Monitor</span>
+        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100/60 backdrop-blur-sm">
+          <span className="w-2 h-2 rounded-full bg-[#2563eb] animate-pulse" />
+          <span className="text-xs text-[#1f2937] font-medium">Live Monitor</span>
         </div>
 
         {/* Connect GitHub */}
         <Link
           href="/connect/callback"
-          className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#0ff] to-[#09f] text-[#0a0e17] rounded-lg hover:shadow-lg hover:shadow-cyan-500/30 transition-all hover:-translate-y-0.5"
+          className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
         >
           <GitBranch className="w-4 h-4" />
           GitHub
@@ -267,20 +267,20 @@ function NavBar() {
 
         {/* Icon buttons */}
         <div className="flex gap-1">
-          <button className="p-2.5 rounded-lg text-[#a8c5dd] hover:text-[#0ff] hover:bg-white/5 transition-all" aria-label="Command palette">
+          <button className="p-2.5 rounded-lg text-[#6b7280] hover:text-[#2563eb] hover:bg-blue-50 transition-all" aria-label="Command palette">
             <Command className="w-5 h-5" />
           </button>
-          <button className="p-2.5 rounded-lg text-[#a8c5dd] hover:text-[#0ff] hover:bg-white/5 transition-all" aria-label="Notifications">
+          <button className="p-2.5 rounded-lg text-[#6b7280] hover:text-[#2563eb] hover:bg-blue-50 transition-all" aria-label="Notifications">
             <Bell className="w-5 h-5" />
           </button>
-          <button className="p-2.5 rounded-lg text-[#a8c5dd] hover:text-[#0ff] hover:bg-white/5 transition-all" aria-label="Settings">
+          <button className="p-2.5 rounded-lg text-[#6b7280] hover:text-[#2563eb] hover:bg-blue-50 transition-all" aria-label="Settings">
             <Settings className="w-5 h-5" />
           </button>
         </div>
 
         {/* Mobile menu */}
-        <button className="lg:hidden p-2 rounded-lg hover:bg-white/5 transition-all">
-          <Menu className="w-5 h-5 text-[#a8c5dd]" />
+        <button className="lg:hidden p-2 rounded-lg hover:bg-blue-50 transition-all">
+          <Menu className="w-5 h-5 text-[#6b7280]" />
         </button>
       </div>
     </nav>
@@ -292,17 +292,17 @@ function NavBar() {
 // ──────────────────────────────────────────────────────────
 function Footer() {
   return (
-    <footer className="mt-auto border-t border-white/5 bg-[rgba(10,14,23,0.5)] backdrop-blur-sm py-10">
+    <footer className="mt-auto border-t border-blue-100/40 bg-white/40 backdrop-blur-sm py-10">
       <div className="flex flex-col md:flex-row justify-between items-center px-4 md:px-8 max-w-7xl mx-auto gap-6">
-        <div style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-lg bg-gradient-to-r from-[#e1e8ed] to-[#a8c5dd] bg-clip-text text-transparent">
+        <div style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-lg bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
           Orion
         </div>
-        <div className="text-sm text-[#7da3c4] text-center">
+        <div className="text-sm text-[#6b7280] text-center">
           © 2025 Orion Systems. Precision meets autonomy.
         </div>
         <div className="flex gap-6">
           {["Privacy Policy", "Terms of Service", "Security", "Status"].map((link) => (
-            <a key={link} href="#" className="text-xs text-[#7da3c4] hover:text-[#0ff] transition-colors">
+            <a key={link} href="#" className="text-xs text-[#6b7280] hover:text-[#2563eb] transition-colors">
               {link}
             </a>
           ))}
@@ -392,7 +392,7 @@ export default function DashboardPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0a0e17] via-[#0f1419] to-[#0a0e17] text-[#e1e8ed] flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-[#ffffff] via-[#f8f9fb] to-[#f0f3f8] text-[#1a1f35] flex flex-col">
       <NavBar />
 
       <main className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-12">
@@ -404,24 +404,24 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center justify-center text-center py-12"
             >
-              <h1 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-5xl md:text-7xl leading-tight mb-6 bg-gradient-to-b from-[#e1e8ed] via-[#a8c5dd] to-[#7da3c4] bg-clip-text text-transparent">
+              <h1 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-5xl md:text-7xl leading-tight mb-6 bg-gradient-to-b from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
                 Know your site&apos;s health{" "}
-                <span className="italic text-transparent bg-gradient-to-r from-[#0ff] via-[#0cf] to-[#09f] bg-clip-text">before</span> your users do.
+                <span className="italic text-transparent bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] bg-clip-text">before</span> your users do.
               </h1>
-              <p className="text-lg text-[#7da3c4] mb-8 max-w-2xl">Get instant insights into your website performance and health metrics in real-time.</p>
+              <p className="text-lg text-[#6b7280] mb-8 max-w-2xl">Get instant insights into your website performance and health metrics in real-time.</p>
               
               <div className="w-full max-w-2xl relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#0ff]/20 to-[#09f]/20 rounded-2xl blur-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-300" />
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-blue-100/20 rounded-2xl blur-2xl opacity-0 group-focus-within:opacity-100 transition-all duration-300" />
                 <div className="relative flex gap-3">
                   <div className="flex-1 relative">
-                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#0ff]" />
+                    <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#2563eb]" />
                     <input
                       ref={heroInputRef}
                       type="url"
                       value={urlInput}
                       onChange={(e) => setUrlInput(e.target.value)}
                       placeholder="https://example.com"
-                      className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl focus:border-[#0ff]/50 focus:ring-2 focus:ring-[#0ff]/20 text-[#e1e8ed] placeholder-[#7da3c4] outline-none transition-all backdrop-blur-sm"
+                      className="w-full pl-12 pr-4 py-3.5 bg-white/70 border border-blue-100/60 rounded-xl focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 text-[#1a1f35] placeholder-[#9ca3af] outline-none transition-all backdrop-blur-sm"
                       disabled={createRunMutation.isPending}
                     />
                   </div>
@@ -429,7 +429,7 @@ export default function DashboardPage() {
                     type="button"
                     onClick={handleSubmit}
                     disabled={createRunMutation.isPending || !urlInput.trim()}
-                    className="px-8 py-3.5 bg-gradient-to-r from-[#0ff] via-[#0cf] to-[#09f] text-[#0a0e17] font-semibold rounded-xl hover:shadow-lg hover:shadow-cyan-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
+                    className="px-8 py-3.5 bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white font-semibold rounded-xl hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
                   >
                     {createRunMutation.isPending ? (
                       <>
@@ -446,7 +446,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               {createRunMutation.isError && (
-                <p className="text-sm text-[#ff6b6b] mt-4">
+                <p className="text-sm text-[#dc2626] mt-4">
                   {(createRunMutation.error as any)?.message || "Failed to start analysis."}
                 </p>
               )}
@@ -471,43 +471,43 @@ export default function DashboardPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
-                className="rounded-2xl p-6 md:p-8 relative overflow-hidden group hover:-translate-y-1 hover:shadow-2xl hover:shadow-cyan-500/10 transition-all duration-300 bg-white/5 border border-white/10 backdrop-blur-xl hover:border-white/20"
+                className="rounded-2xl p-6 md:p-8 relative overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-200/30 transition-all duration-300 bg-white/60 border border-blue-100/40 backdrop-blur-md hover:bg-white/80 hover:border-blue-200/60"
               >
                 {/* Subtle background glow */}
-                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-[#0ff]/10 via-[#09f]/5 to-transparent rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
+                <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-100/20 via-blue-50/10 to-transparent rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
 
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-6 relative z-10">
                   {/* Left: Run info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-4">
                       {lastRun.pass === true ? (
-                        <span className="bg-[#10b981]/15 text-[#10b981] text-xs font-bold px-3 py-1.5 rounded-full border border-[#10b981]/30 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#10b981] animate-pulse" />
+                        <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse" />
                           Passed
                         </span>
                       ) : lastRun.pass === false ? (
-                        <span className="bg-[#ef4444]/15 text-[#ef4444] text-xs font-bold px-3 py-1.5 rounded-full border border-[#ef4444]/30 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#ef4444]" />
+                        <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full border border-red-200 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-red-600" />
                           Failed
                         </span>
                       ) : (
-                        <span className="bg-[#f59e0b]/15 text-[#f59e0b] text-xs font-bold px-3 py-1.5 rounded-full border border-[#f59e0b]/30 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-[#f59e0b] animate-pulse" />
+                        <span className="bg-amber-100 text-amber-700 text-xs font-bold px-3 py-1.5 rounded-full border border-amber-200 flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-amber-600 animate-pulse" />
                           Pending
                         </span>
                       )}
-                      <span className="text-xs text-[#7da3c4]">{getRelativeTime(lastRun.createdAt)}</span>
+                      <span className="text-xs text-[#6b7280]">{getRelativeTime(lastRun.createdAt)}</span>
                     </div>
 
-                    <h2 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-2xl text-[#e1e8ed] mb-2 truncate">
+                    <h2 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-2xl text-[#1f2937] mb-2 truncate">
                       {getRunDisplayName(lastRun)}
                     </h2>
-                    <p className="text-sm text-[#7da3c4] mb-5 truncate">Target: {lastRun.url}</p>
+                    <p className="text-sm text-[#6b7280] mb-5 truncate">Target: {lastRun.url}</p>
 
                     <div className="flex flex-wrap gap-3">
                       <button
                         onClick={() => router.push(`/runs/${lastRun.id}`)}
-                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-white/10 text-[#e1e8ed] border border-white/20 hover:border-white/40 hover:bg-white/15 transition-all flex items-center gap-2"
+                        className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-50 text-[#1f2937] border border-blue-200 hover:border-blue-300 hover:bg-blue-100 transition-all flex items-center gap-2"
                       >
                         <FileText className="w-4 h-4" />
                         View Details
@@ -515,7 +515,7 @@ export default function DashboardPage() {
                       {lastRun.pass === false && (
                         <button
                           onClick={() => router.push(`/runs/${lastRun.id}?action=fix`)}
-                          className="px-4 py-2 bg-gradient-to-r from-[#8b5cf6] to-[#6366f1] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/20 transition-all hover:-translate-y-0.5 flex items-center gap-2"
+                          className="px-4 py-2 bg-gradient-to-r from-[#7c3aed] to-[#6366f1] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:-translate-y-0.5 flex items-center gap-2"
                         >
                           <Sparkles className="w-4 h-4" />
                           Auto-Fix

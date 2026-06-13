@@ -1,42 +1,34 @@
 import type { Metadata, Viewport } from 'next'
-import { Geist, Geist_Mono } from 'next/font/google'
+import { Inter, Syne, IBM_Plex_Mono } from 'next/font/google'
 import './globals.css'
-import { RootProviders } from '../components/providers/root-providers'
+import { RootProviders as Providers } from '../components/providers/root-providers'
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] })
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const inter = Inter({ 
   subsets: ['latin'],
+  variable: '--font-inter',
+})
+
+const syne = Syne({ 
+  subsets: ['latin'],
+  variable: '--font-syne',
+})
+
+const ibmPlexMono = IBM_Plex_Mono({ 
+  subsets: ['latin'],
+  variable: '--font-ibm-mono',
+  weight: ['400', '500', '600']
 })
 
 export const metadata: Metadata = {
-  title: 'Orion - Autonomous QA Platform',
-  description: 'Automated quality assurance for your web applications',
+  title: 'Orion - Know your site\'s health before your users do',
+  description: 'Precision meets autonomy. Monitor your site health in real-time.',
   generator: 'v0.app',
-  icons: {
-    icon: [
-      {
-        url: '/icon-light-32x32.png',
-        media: '(prefers-color-scheme: light)',
-      },
-      {
-        url: '/icon-dark-32x32.png',
-        media: '(prefers-color-scheme: dark)',
-      },
-      {
-        url: '/icon.svg',
-        type: 'image/svg+xml',
-      },
-    ],
-    apple: '/apple-icon.png',
-  },
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'light dark',
+  colorScheme: 'light',
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
   ],
 }
 
@@ -46,11 +38,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`} suppressHydrationWarning>
-      <body>
-        <RootProviders>
+    <html lang="en" className={`${inter.variable} ${syne.variable} ${ibmPlexMono.variable}`}>
+      <body className="bg-gradient-to-br from-[#ffffff] via-[#f8f9fb] to-[#f0f3f8] text-[#1a1f35] font-sans antialiased min-h-screen">
+        <Providers>
           {children}
-        </RootProviders>
+        </Providers>
       </body>
     </html>
   )
