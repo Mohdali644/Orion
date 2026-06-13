@@ -51,7 +51,6 @@ yarn-error.log*
 
 apps/api
 packages/agents
-packages/db
 packages/realtime
 ngrok.exe
 README.md
