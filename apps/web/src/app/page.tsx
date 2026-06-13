@@ -202,90 +202,7 @@ function MiniDonut({ score }: { score: number }) {
   )
 }
 
-// ──────────────────────────────────────────────────────────
-// NavBar – premium glass navigation
-// ──────────────────────────────────────────────────────────
-function NavBar() {
-  const router = useRouter()
-  const pathname = "/"
-
-  return (
-    <nav className="sticky top-0 z-50 h-16 flex items-center justify-between px-4 md:px-8 w-full border-b border-blue-100/40 bg-white/60 backdrop-blur-md">
-      {/* Left: Logo + nav links */}
-      <div className="flex items-center gap-8">
-        <Link href="/" className="flex items-center gap-3 shrink-0 group">
-          <div className="w-9 h-9 bg-gradient-to-br from-[#2563eb] to-[#1d4ed8] rounded-lg flex items-center justify-center shadow-lg shadow-blue-500/20 group-hover:shadow-blue-500/40 transition-all">
-            <Zap className="w-5 h-5 text-white font-bold" />
-          </div>
-          <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
-            Orion
-          </span>
-        </Link>
-
-        <div className="hidden lg:flex items-center gap-1">
-          {[
-            { label: "Dashboard", href: "/" },
-            { label: "Runs", href: "/runs" },
-            { label: "Repos", href: "/repos" },
-            { label: "Docs", href: "/docs" },
-          ].map(({ label, href }) => {
-            const isActive = pathname === href
-            return (
-              <Link
-                key={label}
-                href={href}
-                className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 relative",
-                  isActive
-                    ? "text-[#2563eb] bg-blue-50"
-                    : "text-[#6b7280] hover:text-[#374151] hover:bg-blue-50/50"
-                )}
-              >
-                {label}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Right: actions */}
-      <div className="flex items-center gap-3">
-        {/* Active runs indicator */}
-        <div className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100/60 backdrop-blur-sm">
-          <span className="w-2 h-2 rounded-full bg-[#2563eb] animate-pulse" />
-          <span className="text-xs text-[#1f2937] font-medium">Live Monitor</span>
-        </div>
-
-        {/* Connect GitHub */}
-        <Link
-          href="/connect/callback"
-          className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
-        >
-          <GitBranch className="w-4 h-4" />
-          GitHub
-        </Link>
-
-        {/* Icon buttons */}
-        <div className="flex gap-1">
-          <button className="p-2.5 rounded-lg text-[#6b7280] hover:text-[#2563eb] hover:bg-blue-50 transition-all" aria-label="Command palette">
-            <Command className="w-5 h-5" />
-          </button>
-          <button className="p-2.5 rounded-lg text-[#6b7280] hover:text-[#2563eb] hover:bg-blue-50 transition-all" aria-label="Notifications">
-            <Bell className="w-5 h-5" />
-          </button>
-          <button className="p-2.5 rounded-lg text-[#6b7280] hover:text-[#2563eb] hover:bg-blue-50 transition-all" aria-label="Settings">
-            <Settings className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Mobile menu */}
-        <button className="lg:hidden p-2 rounded-lg hover:bg-blue-50 transition-all">
-          <Menu className="w-5 h-5 text-[#6b7280]" />
-        </button>
-      </div>
-    </nav>
-  )
-}
+import { Navbar } from '../components/Navbar'
 
 // ──────────────────────────────────────────────────────────
 // Footer
@@ -393,7 +310,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#ffffff] via-[#f8f9fb] to-[#f0f3f8] text-[#1a1f35] flex flex-col">
-      <NavBar />
+      <Navbar />
 
       <main className="flex-grow w-full max-w-7xl mx-auto px-4 md:px-8 py-12">
         <div className="grid grid-cols-4 md:grid-cols-12 gap-6">
