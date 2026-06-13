@@ -53,6 +53,5 @@ apps/api
 packages/agents
 packages/db
 packages/realtime
-packages/ui
 ngrok.exe
 README.md
