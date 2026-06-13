@@ -11,10 +11,17 @@ import {
   ChevronRight,
   LayoutDashboard,
   Search,
+  Loader2,
+  ExternalLink,
 } from "lucide-react"
 import Link from "next/link"
 import { reposApi } from "@/lib/api"
 import type { ConnectedRepo } from "@/lib/types"
+
+type Repository = {
+  owner: string
+  name: string
+}
 
 // ──────────────────────────────────────────────────────────
 // Stepper — 3-step progress indicator
@@ -22,9 +29,7 @@ import type { ConnectedRepo } from "@/lib/types"
 function Stepper({ step }: { step: 2 | 3 }) {
   return (
     <div className="flex items-center justify-between mb-9 relative">
-      {/* Background line */}
       <div className="absolute top-3 left-6 right-6 h-0.5 bg-[#E1E2EC] z-0" />
-      {/* Active fill */}
       <motion.div
         initial={{ width: "0%" }}
         animate={{ width: step === 3 ? "100%" : "50%" }}
@@ -76,57 +81,108 @@ function Stepper({ step }: { step: 2 | 3 }) {
 }
 
 // ──────────────────────────────────────────────────────────
-// Inner component (uses useSearchParams)
+// Inner component
 // ──────────────────────────────────────────────────────────
 function ConnectCallbackInner() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const [isLoadingRepo, setIsLoadingRepo] = useState(true)
+  const [status, setStatus] = useState<"loading" | "syncing" | "configure" | "success" | "error">("loading")
   const [repo, setRepo] = useState<ConnectedRepo | null>(null)
   const [stagingUrl, setStagingUrl] = useState("")
   const [isSaving, setIsSaving] = useState(false)
   const [saveError, setSaveError] = useState<string | null>(null)
-  const [isSuccess, setIsSuccess] = useState(false)
-  const [fetchError, setFetchError] = useState(false)
+  const [statusMessage, setStatusMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [syncedCount, setSyncedCount] = useState(0)
 
-  // Fetch repos and match by installation_id
   useEffect(() => {
-    let active = true
-    const fetchMatchedRepo = async () => {
-      const installationId = searchParams.get("installation_id")
-      if (!installationId) {
-        if (active) {
-          setIsLoadingRepo(false)
-          setFetchError(true)
-        }
-        return
-      }
-
+    const handleInstallation = async () => {
       try {
+        const installationId = searchParams.get("installation_id")
+        const setupAction = searchParams.get("setup_action")
+
+        if (!installationId) {
+          setStatus("error")
+          setErrorMessage("Missing installation ID. The installation may have failed.")
+          return
+        }
+
+        console.log("GitHub setup action:", setupAction)
+        setStatusMessage("Syncing your repositories...")
+        setStatus("syncing")
+
+        // Parse repositories from URL params
+        const repoParams = searchParams.getAll("repositories[]")
+        const repositories: Repository[] = repoParams
+          .map((repo) => {
+            const [owner, name] = repo.split("/")
+            if (!owner || !name) return null
+            return { owner: owner.trim(), name: name.trim() }
+          })
+          .filter((repo): repo is Repository => repo !== null)
+
+        // Register repos with backend
+        try {
+          await reposApi.createRepo({
+            installationId,
+            repositories: repositories.length > 0 ? repositories : undefined,
+          })
+          setSyncedCount(repositories.length || 1)
+        } catch (createErr: any) {
+          // createRepo might fail if repos already exist — that's okay, continue
+          console.log("createRepo skipped or failed (may already exist):", createErr?.message)
+        }
+
+        // Fetch the connected repos to find our match
+        setStatusMessage("Fetching repository details...")
         const reposList = await reposApi.getRepos()
-        if (active) {
-          const matched = reposList.find(
-            (r: ConnectedRepo) => String(r.installationId) === String(installationId)
-          )
-          if (matched) {
-            setRepo(matched)
-            setStagingUrl(matched.stagingUrl || "")
+
+        const matched = reposList.find(
+          (r: ConnectedRepo) => String(r.installationId) === String(installationId)
+        )
+
+        if (matched) {
+          setRepo(matched)
+          setStagingUrl(matched.stagingUrl || "")
+
+          // If repo already has staging URL, skip configure step
+          if (matched.stagingUrl && matched.stagingUrl.trim()) {
+            setStatus("success")
           } else {
-            setFetchError(true)
+            setStatus("configure")
+          }
+        } else {
+          // Repo registered but not found in list yet — still show configure with what we have
+          if (repositories.length > 0) {
+            const firstRepo = repositories[0]!
+            setRepo({
+              id: installationId,
+              name: firstRepo.name,
+              owner: firstRepo.owner,
+              fullName: `${firstRepo.owner}/${firstRepo.name}`,
+              installationId,
+              stagingUrl: "",
+              passThreshold: 70,
+              autoFixEnabled: true,
+              status: "pending",
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+            } as ConnectedRepo)
+            setStatus("configure")
+          } else {
+            setStatus("error")
+            setErrorMessage("Repository was installed but we couldn't fetch its details. Please check your repos page.")
           }
         }
-      } catch (err) {
-        console.error("Failed to fetch repos for match:", err)
-        if (active) setFetchError(true)
-      } finally {
-        if (active) setIsLoadingRepo(false)
+      } catch (err: any) {
+        console.error("Installation callback error:", err)
+        setStatus("error")
+        setErrorMessage(err?.message || "Failed to sync repositories. Please try again.")
       }
     }
-    fetchMatchedRepo()
-    return () => {
-      active = false
-    }
+
+    handleInstallation()
   }, [searchParams])
 
   const handleSave = useCallback(
@@ -138,7 +194,7 @@ function ConnectCallbackInner() {
         setIsSaving(true)
         setSaveError(null)
         await reposApi.updateRepo(repo.id, { stagingUrl: stagingUrl.trim() })
-        setIsSuccess(true)
+        setStatus("success")
       } catch (err: any) {
         setSaveError(err?.message || "Failed to update staging URL. Please try again.")
       } finally {
@@ -157,8 +213,8 @@ function ConnectCallbackInner() {
         className="w-full max-w-[480px] bg-white rounded-3xl border border-[#F0F2F5] shadow-[0_8px_32px_rgba(15,23,42,0.04)] p-9 md:p-10 relative overflow-hidden"
       >
         <AnimatePresence mode="wait">
-          {/* ── Loading State ── */}
-          {isLoadingRepo && (
+          {/* ── Loading / Syncing State ── */}
+          {(status === "loading" || status === "syncing") && (
             <motion.div
               key="loading"
               initial={{ opacity: 0 }}
@@ -167,21 +223,23 @@ function ConnectCallbackInner() {
               className="flex flex-col items-center gap-4 py-10"
             >
               <div className="w-11 h-11 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5] flex items-center justify-center">
-                <div className="w-5 h-5 border-[3px] border-[#C2DBF5] border-t-[#0969DA] rounded-full animate-spin" />
+                <Loader2 className="w-5 h-5 text-[#0969DA] animate-spin" />
               </div>
               <div className="text-center">
                 <h2 className="bricolage font-bold text-lg text-[#1F2328] mb-1">
-                  Connecting your repo...
+                  {status === "loading" ? "Connecting your repo..." : "Syncing repositories..."}
                 </h2>
                 <p className="text-[13px] text-[#656D76]">
-                  Fetching installation details from GitHub.
+                  {status === "loading"
+                    ? "Fetching installation details from GitHub."
+                    : statusMessage}
                 </p>
               </div>
             </motion.div>
           )}
 
-          {/* ── Error / Not Found ── */}
-          {!isLoadingRepo && (fetchError || !repo) && (
+          {/* ── Error State ── */}
+          {status === "error" && (
             <motion.div
               key="error"
               initial={{ opacity: 0 }}
@@ -193,73 +251,35 @@ function ConnectCallbackInner() {
                 <AlertCircle size={32} />
               </div>
               <h1 className="bricolage font-extrabold text-2xl text-[#1F2328] tracking-tight mb-1">
-                Something went wrong
+                Installation Failed
               </h1>
               <p className="text-sm text-[#656D76] leading-relaxed">
-                We couldn&apos;t find your connected repo. The link might be invalid or the app may
-                not have been fully installed.
-              </p>
-              <Link
-                href="/repos"
-                className="mt-3 inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[#F0F2F5] border border-[#D0D7DE] text-[#1F2328] font-bold text-sm hover:bg-[#E2E8F0] transition-colors no-underline"
-              >
-                Go to Repos
-                <ChevronRight size={14} />
-              </Link>
-            </motion.div>
-          )}
-
-          {/* ── Success State ── */}
-          {!isLoadingRepo && repo && isSuccess && (
-            <motion.div
-              key="success"
-              initial={{ opacity: 0, scale: 0.96 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.4 }}
-              className="flex flex-col items-center text-center"
-            >
-              <Stepper step={3} />
-
-              <div className="relative mb-5">
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="w-20 h-20 rounded-full bg-[#E6F4EA] text-[#1A7F37] flex items-center justify-center border-[5px] border-[#A7F3D0]"
-                >
-                  <CheckCircle2 size={36} strokeWidth={2.5} />
-                </motion.div>
-              </div>
-
-              <h1 className="bricolage font-extrabold text-[28px] text-[#1F2328] tracking-tight mb-2">
-                You&apos;re all set!
-              </h1>
-              <p className="text-sm text-[#656D76] leading-relaxed mb-8 max-w-[320px]">
-                We&apos;re ready to start auditing your repository for quality regressions.
+                {errorMessage || "Something went wrong. The installation may not have completed."}
               </p>
 
-              <div className="flex flex-col gap-3 w-full">
-                <Link
-                  href={`/repos/${repo.id}`}
-                  className="flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#0969DA] text-white font-bold text-sm hover:bg-[#0558B7] hover:-translate-y-0.5 transition-all no-underline w-full shadow-[0_2px_12px_rgba(9,105,218,0.28)]"
+              <div className="flex flex-col sm:flex-row gap-3 mt-4 w-full">
+                <a
+                  href={process.env.NEXT_PUBLIC_GITHUB_APP_URL || "https://github.com/apps/orion-qa/installations/new"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#0969DA] text-white font-bold text-sm hover:bg-[#0558B7] transition-colors no-underline"
                 >
-                  <Search size={16} />
-                  View Repo Details
-                </Link>
+                  <GitBranch size={14} />
+                  Try Again
+                </a>
                 <Link
-                  href="/"
-                  className="flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#F0F2F5] border border-[#D0D7DE] text-[#1F2328] font-bold text-sm hover:bg-[#E2E8F0] transition-colors no-underline w-full"
+                  href="/repos"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#F0F2F5] border border-[#D0D7DE] text-[#1F2328] font-bold text-sm hover:bg-[#E2E8F0] transition-colors no-underline"
                 >
-                  <LayoutDashboard size={15} />
-                  Go to Dashboard
+                  Go to Repos
+                  <ChevronRight size={14} />
                 </Link>
               </div>
             </motion.div>
           )}
 
-          {/* ── Configure State (Step 2) ── */}
-          {!isLoadingRepo && repo && !isSuccess && (
+          {/* ── Configure State ── */}
+          {status === "configure" && repo && (
             <motion.div
               key="form"
               initial={{ opacity: 0 }}
@@ -276,7 +296,9 @@ function ConnectCallbackInner() {
                   GitHub App Connected!
                 </h1>
                 <p className="text-sm text-[#656D76] leading-relaxed">
-                  Your repository was linked to Orion. Set the staging URL our agents will audit.
+                  {syncedCount > 0
+                    ? `${syncedCount} repositor${syncedCount > 1 ? "ies" : "y"} synced. Set the staging URL our agents will audit.`
+                    : "Your repository was linked to Orion. Set the staging URL our agents will audit."}
                 </p>
               </div>
 
@@ -294,6 +316,14 @@ function ConnectCallbackInner() {
                     {repo.name}
                   </div>
                 </div>
+                <a
+                  href={`https://github.com/${repo.owner}/${repo.name}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#8B949E] hover:text-[#0969DA] transition-colors shrink-0"
+                >
+                  <ExternalLink size={16} />
+                </a>
               </div>
 
               {/* Staging URL form */}
@@ -330,18 +360,83 @@ function ConnectCallbackInner() {
                   >
                     {isSaving ? (
                       <>
-                        <div className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                        <Loader2 className="w-4 h-4 animate-spin" />
                         Setting up...
                       </>
                     ) : (
                       "Start Monitoring"
                     )}
                   </button>
-                  <p className="text-[11.5px] text-[#8B949E] text-center font-medium">
-                    You can always change this later from the repos page.
-                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStatus("success")}
+                    className="text-[11.5px] text-[#8B949E] text-center font-medium hover:text-[#656D76] transition-colors"
+                  >
+                    Skip for now — you can change this later
+                  </button>
                 </div>
               </form>
+            </motion.div>
+          )}
+
+          {/* ── Success State ── */}
+          {status === "success" && repo && (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.4 }}
+              className="flex flex-col items-center text-center"
+            >
+              <Stepper step={3} />
+
+              <div className="relative mb-5">
+                <motion.div
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                  className="w-20 h-20 rounded-full bg-[#E6F4EA] text-[#1A7F37] flex items-center justify-center border-[5px] border-[#A7F3D0]"
+                >
+                  <CheckCircle2 size={36} strokeWidth={2.5} />
+                </motion.div>
+              </div>
+
+              <h1 className="bricolage font-extrabold text-[28px] text-[#1F2328] tracking-tight mb-2">
+                You're all set!
+              </h1>
+              <p className="text-sm text-[#656D76] leading-relaxed mb-8 max-w-[320px]">
+                {syncedCount > 0
+                  ? `${syncedCount} repositor${syncedCount > 1 ? "ies" : "y"} synced and ready for auditing.`
+                  : "We're ready to start auditing your repository for quality regressions."}
+              </p>
+
+              <div className="flex flex-col gap-3 w-full">
+                {repo && repo.id !== repo.installationId ? (
+                  <Link
+                    href={`/repos/${repo.id}`}
+                    className="flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#0969DA] text-white font-bold text-sm hover:bg-[#0558B7] hover:-translate-y-0.5 transition-all no-underline w-full shadow-[0_2px_12px_rgba(9,105,218,0.28)]"
+                  >
+                    <Search size={16} />
+                    View Repo Details
+                  </Link>
+                ) : (
+                  <Link
+                    href="/repos"
+                    className="flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#0969DA] text-white font-bold text-sm hover:bg-[#0558B7] hover:-translate-y-0.5 transition-all no-underline w-full shadow-[0_2px_12px_rgba(9,105,218,0.28)]"
+                  >
+                    <GitBranch size={16} />
+                    View Repositories
+                  </Link>
+                )}
+                <Link
+                  href="/"
+                  className="flex items-center justify-center gap-2 py-3.5 px-5 rounded-xl bg-[#F0F2F5] border border-[#D0D7DE] text-[#1F2328] font-bold text-sm hover:bg-[#E2E8F0] transition-colors no-underline w-full"
+                >
+                  <LayoutDashboard size={15} />
+                  Go to Dashboard
+                </Link>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -359,7 +454,7 @@ export default function ConnectCallbackPage() {
       fallback={
         <div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center">
           <div className="w-11 h-11 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5] flex items-center justify-center">
-            <div className="w-5 h-5 border-[3px] border-[#C2DBF5] border-t-[#0969DA] rounded-full animate-spin" />
+            <Loader2 className="w-5 h-5 text-[#0969DA] animate-spin" />
           </div>
         </div>
       }
