@@ -1,4 +1,3 @@
-// src/app/page.tsx
 "use client"
 
 import { useState, useMemo, useRef, useCallback } from "react"
@@ -39,12 +38,12 @@ import {
 import { runsApi, reposApi } from "@/lib/api"
 import { cn, formatDate, formatDuration, getScoreLabel, getScoreColor, getStatusColor } from "@/lib/utils"
 import type { Run, ConnectedRepo } from "@/lib/types"
+import { Navbar } from '../components/Navbar'
 
 // ──────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────
 
-/** Convert Tailwind color class to hex for SVG strokes */
 function scoreClassToHex(colorClass: string): string {
   if (colorClass.includes("green") || colorClass.includes("emerald")) return "#10b981"
   if (colorClass.includes("amber") || colorClass.includes("yellow")) return "#f59e0b"
@@ -77,7 +76,7 @@ function getRelativeTime(dateStr: string): string {
 }
 
 // ──────────────────────────────────────────────────────────
-// ScoreArc – full-size animated score ring
+// ScoreArc
 // ──────────────────────────────────────────────────────────
 function ScoreArc({ score, size = 120, animate = true }: { score: number; size?: number; animate?: boolean }) {
   const center = size / 2
@@ -110,7 +109,7 @@ function ScoreArc({ score, size = 120, animate = true }: { score: number; size?:
 }
 
 // ──────────────────────────────────────────────────────────
-// MiniScoreRing – tiny score ring for table rows
+// MiniScoreRing
 // ──────────────────────────────────────────────────────────
 function MiniScoreRing({ score }: { score: number }) {
   const size = 28
@@ -132,7 +131,7 @@ function MiniScoreRing({ score }: { score: number }) {
           strokeDashoffset={circumference - arcLength}
         />
       </svg>
-          <span style={{ fontFamily: 'var(--font-syne)', color: colorHex }} className="font-bold text-sm" >{score}</span>
+      <span className="bricolage font-bold text-sm" style={{ color: colorHex }}>{score}</span>
     </div>
   )
 }
@@ -166,18 +165,18 @@ function StatCard({
         children
       ) : donut ? (
         <div className="flex items-end justify-between mt-2 relative z-10">
-          <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-4xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">{value}</span>
+          <span className="bricolage font-bold text-4xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">{value}</span>
           <MiniDonut score={donut.score} />
         </div>
       ) : (
-        <span style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-4xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent mt-2 relative z-10">{value}</span>
+        <span className="bricolage font-bold text-4xl bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent mt-2 relative z-10">{value}</span>
       )}
     </motion.div>
   )
 }
 
 // ──────────────────────────────────────────────────────────
-// MiniDonut – tiny donut for avg score stat card
+// MiniDonut
 // ──────────────────────────────────────────────────────────
 function MiniDonut({ score }: { score: number }) {
   const size = 48
@@ -203,8 +202,6 @@ function MiniDonut({ score }: { score: number }) {
   )
 }
 
-import { Navbar } from '../components/Navbar'
-
 // ──────────────────────────────────────────────────────────
 // Footer
 // ──────────────────────────────────────────────────────────
@@ -212,7 +209,7 @@ function Footer() {
   return (
     <footer className="mt-auto border-t border-blue-100/40 bg-white/40 backdrop-blur-sm py-10">
       <div className="flex flex-col md:flex-row justify-between items-center px-4 md:px-8 max-w-7xl mx-auto gap-6">
-        <div style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-lg bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
+        <div className="bricolage font-bold text-lg bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
           Orion
         </div>
         <div className="text-sm text-[#6b7280] text-center">
@@ -241,7 +238,6 @@ export default function DashboardPage() {
   const [page, setPage] = useState(1)
   const heroInputRef = useRef<HTMLInputElement>(null)
 
-  // Fetch runs
   const {
     data: runsData,
     isLoading: runsLoading,
@@ -258,14 +254,12 @@ export default function DashboardPage() {
     staleTime: 10_000,
   })
 
-  // Fetch repos
   const { data: repos } = useQuery({
     queryKey: ["repos"],
     queryFn: () => reposApi.getRepos(),
     staleTime: 30_000,
   })
 
-  // Create run mutation
   const createRunMutation = useMutation({
     mutationFn: (url: string) => runsApi.createRun({ url }),
     onSuccess: (data) => {
@@ -274,7 +268,6 @@ export default function DashboardPage() {
     },
   })
 
-  // Derived data
   const runs: Run[] = useMemo(() => (runsData?.data as Run[]) ?? [], [runsData])
   const totalRuns = runsData?.total ?? runs.length
   const totalPages = runsData ? Math.max(1, Math.ceil((runsData.total ?? runs.length) / 10)) : 1
@@ -322,7 +315,7 @@ export default function DashboardPage() {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center justify-center text-center py-12"
             >
-              <h1 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-5xl md:text-7xl leading-tight mb-6 bg-gradient-to-b from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
+              <h1 className="bricolage font-bold text-5xl md:text-7xl leading-tight mb-6 bg-gradient-to-b from-[#1f2937] to-[#374151] bg-clip-text text-transparent">
                 Know your site&apos;s health{" "}
                 <span className="italic text-transparent bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] bg-clip-text">before</span> your users do.
               </h1>
@@ -351,7 +344,7 @@ export default function DashboardPage() {
                   >
                     {createRunMutation.isPending ? (
                       <>
-                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-4 h-4 border-2 border-[#0a0e17] border-t-transparent rounded-full" />
+                        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-4 h-4 border-2 border-white border-t-transparent rounded-full" />
                         Scanning...
                       </>
                     ) : (
@@ -391,16 +384,14 @@ export default function DashboardPage() {
                 transition={{ delay: 0.1 }}
                 className="rounded-2xl p-6 md:p-8 relative overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-200/30 transition-all duration-300 bg-white/60 border border-blue-100/40 backdrop-blur-md hover:bg-white/80 hover:border-blue-200/60"
               >
-                {/* Subtle background glow */}
                 <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-blue-100/20 via-blue-50/10 to-transparent rounded-full blur-3xl -mr-24 -mt-24 pointer-events-none" />
 
                 <div className="flex flex-col sm:flex-row justify-between items-start gap-6 relative z-10">
-                  {/* Left: Run info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-3 mb-4">
                       {lastRun.pass === true ? (
                         <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-200 flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-green-600 animate-pulse" />
+                          <span className="w-2 h-2 rounded-full bg-green-600" />
                           Passed
                         </span>
                       ) : lastRun.pass === false ? (
@@ -417,7 +408,7 @@ export default function DashboardPage() {
                       <span className="text-xs text-[#6b7280]">{getRelativeTime(lastRun.createdAt)}</span>
                     </div>
 
-                    <h2 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-2xl text-[#1f2937] mb-2 truncate">
+                    <h2 className="bricolage font-bold text-2xl text-[#1f2937] mb-2 truncate">
                       {getRunDisplayName(lastRun)}
                     </h2>
                     <p className="text-sm text-[#6b7280] mb-5 truncate">Target: {lastRun.url}</p>
@@ -442,7 +433,6 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* Right: Score arc */}
                   <div className="shrink-0">
                     {lastRun.overallScore != null ? (
                       <ScoreArc score={lastRun.overallScore} size={120} animate />
@@ -461,10 +451,10 @@ export default function DashboardPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.15 }}
-              className="rounded-2xl overflow-hidden flex flex-col bg-white/5 border border-white/10 backdrop-blur-xl hover:border-white/20 transition-colors duration-300"
+              className="rounded-2xl overflow-hidden flex flex-col bg-white/60 border border-blue-100/40 backdrop-blur-md"
             >
-              <div className="p-6 border-b border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <h3 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-2xl text-[#e1e8ed]">Recent Runs</h3>
+              <div className="p-6 border-b border-blue-100/40 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <h3 className="bricolage font-bold text-2xl text-[#1f2937]">Recent Runs</h3>
                 <div className="flex gap-2 flex-wrap">
                   {[
                     { label: "All", value: "" },
@@ -478,8 +468,8 @@ export default function DashboardPage() {
                       className={cn(
                         "px-3 py-1.5 text-xs font-semibold rounded-lg transition-all",
                         statusFilter === value
-                          ? "bg-white/15 text-[#0ff] border border-white/30"
-                          : "bg-white/5 text-[#7da3c4] hover:bg-white/10 border border-white/10"
+                          ? "bg-blue-50 text-[#2563eb] border border-blue-200"
+                          : "bg-white text-[#6b7280] hover:bg-blue-50/50 border border-blue-100/40"
                       )}
                     >
                       {label}
@@ -491,29 +481,29 @@ export default function DashboardPage() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-white/5 border-b border-white/10">
-                      <th className="p-4 text-xs font-bold text-[#7da3c4] uppercase tracking-widest w-12">Status</th>
-                      <th className="p-4 text-xs font-bold text-[#7da3c4] uppercase tracking-widest">Name</th>
-                      <th className="p-4 text-xs font-bold text-[#7da3c4] uppercase tracking-widest">Score</th>
-                      <th className="p-4 text-xs font-bold text-[#7da3c4] uppercase tracking-widest">Duration</th>
-                      <th className="p-4 text-xs font-bold text-[#7da3c4] uppercase tracking-widest">Time</th>
+                    <tr className="bg-blue-50/30 border-b border-blue-100/40">
+                      <th className="p-4 text-xs font-bold text-[#6b7280] uppercase tracking-widest w-12">Status</th>
+                      <th className="p-4 text-xs font-bold text-[#6b7280] uppercase tracking-widest">Name</th>
+                      <th className="p-4 text-xs font-bold text-[#6b7280] uppercase tracking-widest">Score</th>
+                      <th className="p-4 text-xs font-bold text-[#6b7280] uppercase tracking-widest">Duration</th>
+                      <th className="p-4 text-xs font-bold text-[#6b7280] uppercase tracking-widest">Time</th>
                     </tr>
                   </thead>
-                  <tbody className="text-sm text-[#e1e8ed]">
+                  <tbody className="text-sm text-[#1f2937]">
                     {runsLoading ? (
                       Array.from({ length: 5 }).map((_, i) => (
-                        <tr key={i} className="border-b border-white/5 hover:bg-white/3 transition-colors">
+                        <tr key={i} className="border-b border-blue-100/20 hover:bg-blue-50/20 transition-colors">
                           {Array.from({ length: 5 }).map((_, j) => (
-                            <td key={j} className="p-4"><div className="h-4 bg-white/10 rounded animate-pulse" style={{ width: j === 1 ? 140 : 60 }} /></td>
+                            <td key={j} className="p-4"><div className="h-4 bg-blue-100 rounded animate-pulse" style={{ width: j === 1 ? 140 : 60 }} /></td>
                           ))}
                         </tr>
                       ))
                     ) : runs.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="p-10 text-center">
-                          <Search className="w-10 h-10 text-[#7da3c4] mx-auto mb-3" />
-                          <p className="font-bold text-[#e1e8ed]">No runs yet</p>
-                          <p className="text-sm text-[#7da3c4] mt-1">Enter a URL above to start your first audit.</p>
+                          <Search className="w-10 h-10 text-[#9ca3af] mx-auto mb-3" />
+                          <p className="bricolage font-bold text-[#1f2937]">No runs yet</p>
+                          <p className="text-sm text-[#6b7280] mt-1">Enter a URL above to start your first audit.</p>
                         </td>
                       </tr>
                     ) : (
@@ -521,7 +511,7 @@ export default function DashboardPage() {
                         <tr
                           key={run.id}
                           onClick={() => router.push(`/runs/${run.id}`)}
-                          className="border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group"
+                          className="border-b border-blue-100/20 hover:bg-blue-50/30 transition-colors cursor-pointer group"
                         >
                           <td className="p-4">
                             {run.pass === true ? (
@@ -539,22 +529,20 @@ export default function DashboardPage() {
                               <AlertTriangle className="w-5 h-5 text-[#f59e0b]" />
                             )}
                           </td>
-                          <td className="p-4 font-medium text-[#e1e8ed] truncate max-w-[200px] group-hover:text-[#0ff] transition-colors">{getRunDisplayName(run)}</td>
+                          <td className="p-4 font-medium text-[#1f2937] truncate max-w-[200px] group-hover:text-[#2563eb] transition-colors">{getRunDisplayName(run)}</td>
                           <td className="p-4">
                             {run.overallScore != null ? (
                               <MiniScoreRing score={run.overallScore} />
                             ) : (
-                              <span className="text-[#7da3c4]">—</span>
+                              <span className="text-[#9ca3af]">—</span>
                             )}
                           </td>
-                          <td className="p-4 text-[#7da3c4]">
+                          <td className="p-4 text-[#6b7280]">
                             {run.duration
                               ? formatDuration(run.duration / 1000)
-                              : run.duration
-                                ? formatDuration(run.duration / 1000)
-                                : "—"}
+                              : "—"}
                           </td>
-                          <td className="p-4 text-[#7da3c4]">{getRelativeTime(run.createdAt)}</td>
+                          <td className="p-4 text-[#6b7280]">{getRelativeTime(run.createdAt)}</td>
                         </tr>
                       ))
                     )}
@@ -562,20 +550,19 @@ export default function DashboardPage() {
                 </table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && !runsLoading && (
-                <div className="flex items-center justify-between px-6 py-4 border-t border-white/10">
-                  <span className="text-xs text-[#7da3c4]">
+                <div className="flex items-center justify-between px-6 py-4 border-t border-blue-100/40">
+                  <span className="text-xs text-[#6b7280]">
                     Page {page} of {totalPages} · {totalRuns} total runs
                   </span>
                   <div className="flex items-center gap-1">
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
                       disabled={page === 1}
-                      className="p-2 rounded-lg hover:bg-white/10 disabled:opacity-30 transition-colors"
+                      className="p-2 rounded-lg hover:bg-blue-50 disabled:opacity-30 transition-colors"
                       aria-label="Previous page"
                     >
-                      <ChevronLeft className="w-4 h-4 text-[#a8c5dd]" />
+                      <ChevronLeft className="w-4 h-4 text-[#6b7280]" />
                     </button>
                     {Array.from({ length: totalPages }, (_, i) => i + 1)
                       .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
@@ -584,14 +571,14 @@ export default function DashboardPage() {
                         const showEllipsis = idx > 0 && prev !== undefined && p - prev > 1
                         return (
                           <div key={p} className="flex items-center gap-1">
-                            {showEllipsis && <span className="text-xs text-[#7da3c4] px-1">...</span>}
+                            {showEllipsis && <span className="text-xs text-[#9ca3af] px-1">...</span>}
                             <button
                               onClick={() => setPage(p)}
                               className={cn(
                                 "min-w-[32px] h-8 text-xs font-bold rounded-lg transition-all",
                                 page === p
-                                  ? "bg-gradient-to-r from-[#0ff] to-[#09f] text-[#0a0e17]"
-                                  : "text-[#a8c5dd] hover:bg-white/10"
+                                  ? "bg-[#2563eb] text-white"
+                                  : "text-[#6b7280] hover:bg-blue-50"
                               )}
                             >
                               {p}
@@ -602,10 +589,10 @@ export default function DashboardPage() {
                     <button
                       onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                       disabled={page === totalPages}
-                      className="p-1.5 rounded hover:bg-[#ecedf7] disabled:opacity-30 transition-colors"
+                      className="p-1.5 rounded hover:bg-blue-50 disabled:opacity-30 transition-colors"
                       aria-label="Next page"
                     >
-                      <ChevronRight className="w-4 h-4 text-[#424753]" />
+                      <ChevronRight className="w-4 h-4 text-[#6b7280]" />
                     </button>
                   </div>
                 </div>
@@ -615,23 +602,28 @@ export default function DashboardPage() {
 
           {/* ── Sidebar (4 cols) ── */}
           <div className="col-span-4 md:col-span-4 flex flex-col gap-6">
-            {/* Environment Status */}
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10 backdrop-blur-xl hover:border-white/20 transition-colors duration-300">
-              <h3 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-xl text-[#e1e8ed] mb-4">Connected Repos</h3>
+            {/* Connected Repos */}
+            <div className="rounded-2xl p-6 bg-white/60 border border-blue-100/40 backdrop-blur-md">
+              <h3 className="bricolage font-bold text-xl text-[#1f2937] mb-4">Connected Repos</h3>
               {reposList.length === 0 ? (
                 <div className="text-center py-8">
-                  <GitBranch className="w-8 h-8 text-[#7da3c4] mx-auto mb-3" />
-                  <p className="text-sm text-[#7da3c4]">No repos connected</p>
-                  <Link href="/connect/callback" className="text-xs text-[#0ff] hover:text-[#0cf] transition-colors mt-2 inline-block font-semibold">
-                    Connect repository →
-                  </Link>
+                  <GitBranch className="w-8 h-8 text-[#9ca3af] mx-auto mb-3" />
+                  <p className="text-sm text-[#6b7280]">No repos connected</p>
+                  <a
+  href="https://github.com/settings/installations/119828065"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="text-xs text-[#2563eb] hover:text-[#1d4ed8] transition-colors mt-2 inline-block font-semibold"
+>
+  Connect repository →
+</a>
                 </div>
               ) : (
                 <div className="space-y-3">
                   {reposList.slice(0, 5).map((repo) => (
                     <div
                       key={repo.id}
-                      className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/20 hover:bg-white/10 transition-all"
+                      className="flex items-center justify-between p-4 rounded-xl bg-blue-50/50 border border-blue-100/40 hover:border-blue-200/60 hover:bg-blue-50 transition-all"
                     >
                       <div className="flex items-center gap-3 min-w-0">
                         <span
@@ -642,11 +634,11 @@ export default function DashboardPage() {
                           )}
                         />
                         <div className="min-w-0">
-                          <span className="text-sm font-medium text-[#e1e8ed] block truncate">
+                          <span className="text-sm font-medium text-[#1f2937] block truncate">
                             {repo.fullName || `${repo.owner}/${repo.name}`}
                           </span>
                           {repo.stagingUrl && (
-                            <span className="text-xs text-[#7da3c4] block truncate">{repo.stagingUrl}</span>
+                            <span className="text-xs text-[#6b7280] block truncate">{repo.stagingUrl}</span>
                           )}
                         </div>
                       </div>
@@ -666,19 +658,19 @@ export default function DashboardPage() {
             </div>
 
             {/* Quick Actions */}
-            <div className="rounded-2xl p-6 bg-white/5 border border-white/10 backdrop-blur-xl hover:border-white/20 transition-colors duration-300">
-              <h3 style={{ fontFamily: 'var(--font-syne)' }} className="font-bold text-xl text-[#e1e8ed] mb-4">Quick Actions</h3>
+            <div className="rounded-2xl p-6 bg-white/60 border border-blue-100/40 backdrop-blur-md">
+              <h3 className="bricolage font-bold text-xl text-[#1f2937] mb-4">Quick Actions</h3>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={handleNewRunClick}
-                  className="p-6 rounded-xl bg-gradient-to-br from-[#0ff]/10 to-[#09f]/10 border border-white/10 hover:border-[#0ff]/50 hover:bg-gradient-to-br hover:from-[#0ff]/20 hover:to-[#09f]/20 transition-all flex flex-col items-center justify-center gap-2 text-[#0ff] group hover:shadow-lg hover:shadow-cyan-500/20"
+                  className="p-6 rounded-xl bg-blue-50 border border-blue-100/40 hover:border-blue-300 hover:bg-blue-100/50 transition-all flex flex-col items-center justify-center gap-2 text-[#2563eb] group"
                 >
                   <PlusSquare className="w-6 h-6 group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-semibold">New Run</span>
                 </button>
                 <Link
                   href="/runs"
-                  className="p-6 rounded-xl bg-gradient-to-br from-[#8b5cf6]/10 to-[#6366f1]/10 border border-white/10 hover:border-purple-500/50 hover:bg-gradient-to-br hover:from-[#8b5cf6]/20 hover:to-[#6366f1]/20 transition-all flex flex-col items-center justify-center gap-2 text-[#a78bfa] group hover:shadow-lg hover:shadow-purple-500/20"
+                  className="p-6 rounded-xl bg-purple-50 border border-purple-100/40 hover:border-purple-300 hover:bg-purple-100/50 transition-all flex flex-col items-center justify-center gap-2 text-[#7c3aed] group"
                 >
                   <Code className="w-6 h-6 group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-semibold">All Runs</span>
@@ -690,16 +682,6 @@ export default function DashboardPage() {
       </main>
 
       <Footer />
-
-      {/* Global styles */}
-      <style jsx global>{`
-        @keyframes draw {
-          to { stroke-dashoffset: var(--target-offset); }
-        }
-        input::placeholder {
-          color: rgb(125, 163, 196);
-        }
-      `}</style>
     </div>
   )
 }

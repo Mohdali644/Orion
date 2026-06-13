@@ -1,4 +1,3 @@
-// src/components/Navbar.tsx
 'use client'
 
 import Link from 'next/link'
@@ -50,15 +49,16 @@ export function Navbar() {
       </div>
 
       <div className="flex items-center gap-3">
-        <Link
-          href="/connect/callback"
+        <a
+          href="https://github.com/settings/installations/119828065"
+          target="_blank"
+          rel="noopener noreferrer"
           className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
         >
           <GitBranch className="w-4 h-4" />
           Connect GitHub
-        </Link>
+        </a>
 
-        {/* Mobile menu */}
         <button className="lg:hidden p-2 rounded-lg hover:bg-blue-50 transition-all">
           <svg className="w-5 h-5 text-[#6b7280]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />

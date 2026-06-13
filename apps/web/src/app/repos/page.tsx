@@ -1,4 +1,3 @@
-//src/app/repos/page.tsx
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -128,13 +127,15 @@ export default function ReposPage() {
               </div>
 
               {/* CTA Button */}
-              <Link
-                href="/connect/github"
+              <a
+                href="https://github.com/apps/orion-qa/installations/new"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 font-semibold text-lg"
               >
                 <GitBranch className="w-5 h-5" />
                 Connect GitHub Repository
-              </Link>
+              </a>
             </div>
           </motion.div>
         )}
@@ -196,13 +197,15 @@ export default function ReposPage() {
               className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/50 p-8 text-center"
             >
               <p className="text-[#6b7280] mb-4">Want to connect more repositories?</p>
-              <Link
-                href="/connect/github"
-                className="inline-flex items-center gap-2 px-6 py-2 bg-white border border-blue-200 text-[#2563eb] rounded-lg hover:bg-blue-50 transition-all font-semibold"
-              >
+              <a
+  href="https://github.com/settings/installations/119828065"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="..."
+>
                 <GitBranch className="w-4 h-4" />
                 Connect Another Repo
-              </Link>
+              </a>
             </motion.div>
           </motion.div>
         )}
