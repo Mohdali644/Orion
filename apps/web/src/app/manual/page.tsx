@@ -2,8 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { DashboardShell } from '@/components/shell/dashboard-shell'
-import { Button } from '@/components/ui/button'
+import { NavBar } from '../_components/NavBar'
 import { runsApi } from '@/lib/api'
 import { isValidUrl, cn } from '@/lib/utils'
 import { AlertCircle, CheckCircle, Loader2, Sparkles } from 'lucide-react'
@@ -32,6 +31,7 @@ export default function ManualAuditPage() {
     } catch (err: any) {
       setError(err.message || 'Failed to create audit. Please try again.')
       setUrlError(err.message || 'Failed to create audit. Please try again.')
+      console.error('[v0] Error creating run:', err)
     } finally {
       setIsLoading(false)
     }
@@ -48,8 +48,10 @@ export default function ManualAuditPage() {
   }
 
   return (
-    <DashboardShell>
-      <div className="max-w-3xl mx-auto py-12">
+    <div className="min-h-screen bg-gradient-to-br from-[#ffffff] via-[#f8f9fb] to-[#f0f3f8]">
+      <NavBar activeCount={0} />
+
+      <main className="max-w-3xl mx-auto px-4 md:px-8 py-16">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -60,7 +62,7 @@ export default function ManualAuditPage() {
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-100 mb-2">
               <Sparkles className="w-7 h-7 text-[#2563eb]" />
             </div>
-            <h1 style={{ fontFamily: 'var(--font-syne)' }} className="text-4xl font-bold bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">Instant Quality Audit</h1>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">Instant Quality Audit</h1>
             <p className="text-lg text-[#6b7280] max-w-2xl mx-auto">
               Analyze any public URL instantly. No signup required. See performance metrics, accessibility issues, and actionable insights in seconds.
             </p>
@@ -214,7 +216,7 @@ export default function ManualAuditPage() {
             </div>
           </motion.div>
         </motion.div>
-      </div>
-    </DashboardShell>
+      </main>
+    </div>
   )
 }
