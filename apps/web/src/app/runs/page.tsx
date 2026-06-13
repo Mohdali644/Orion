@@ -1,11 +1,11 @@
-//runs/page.tsx
 'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
 import { DashboardShell } from '@/components/shell/dashboard-shell'
 import { Button } from '@/components/ui/button'
-import { useRuns } from '@/lib/hooks'
+import { useRuns } from '@/lib/hooks' 
+import { motion } from 'framer-motion'
 import { formatDate, formatDuration, getStatusColor, getScoreColor, getScoreLabel, truncate } from '@/lib/utils'
 import { Loader2, Search, Filter, ExternalLink, AlertCircle } from 'lucide-react'
 
@@ -31,211 +31,254 @@ export default function RunsPage() {
 
   return (
     <DashboardShell>
-      <div className="space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-6"
+      >
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold text-white">Audit Runs</h1>
-          <p className="text-slate-400">View all manual and automated quality audits</p>
+          <h1 style={{ fontFamily: 'var(--font-syne)' }} className="text-4xl font-bold bg-gradient-to-r from-[#1f2937] to-[#374151] bg-clip-text text-transparent">Quality Audits</h1>
+          <p className="text-[#6b7280] text-lg">Track all manual and automated quality checks</p>
         </div>
 
         {/* Filters */}
-        <div className="space-y-4">
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="space-y-4"
+        >
           {/* Search */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-500" />
-            <input
-              type="text"
-              placeholder="Search by URL or run ID..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value)
-                setPage(1)
-              }}
-              className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-700 bg-slate-900/50 text-white placeholder-slate-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 transition-all"
-            />
+          <div className="relative group">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-200/20 to-blue-100/20 rounded-2xl blur-xl opacity-0 group-focus-within:opacity-100 transition-all duration-300" />
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-[#6b7280]" />
+              <input
+                type="text"
+                placeholder="Search by URL or run ID..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value)
+                  setPage(1)
+                }}
+                className="w-full pl-12 pr-4 py-3 rounded-2xl border border-blue-100/60 bg-white/70 backdrop-blur-sm text-[#1a1f35] placeholder-[#9ca3af] focus:border-blue-500/70 focus:ring-2 focus:ring-blue-500/20 transition-all font-medium"
+              />
+            </div>
           </div>
 
           {/* Filter Buttons */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-4">
             <div className="flex gap-2">
-              <label className="text-sm text-slate-400 flex items-center">Mode:</label>
+              <label className="text-sm font-semibold text-[#1f2937] flex items-center">Type:</label>
               {(['all', 'manual', 'ci'] as const).map((m) => (
-                <button
+                <motion.button
                   key={m}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     setMode(m)
                     setPage(1)
                   }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                     mode === m
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-slate-900/50 text-slate-400 border border-slate-700/50 hover:border-slate-600'
+                      ? 'bg-[#2563eb] text-white shadow-lg shadow-blue-500/30'
+                      : 'bg-white/50 border border-blue-100/40 text-[#6b7280] hover:bg-white/70'
                   }`}
                 >
                   {m === 'all' ? 'All' : m === 'manual' ? 'Manual' : 'CI'}
-                </button>
+                </motion.button>
               ))}
             </div>
 
             <div className="flex gap-2">
-              <label className="text-sm text-slate-400 flex items-center">Status:</label>
+              <label className="text-sm font-semibold text-[#1f2937] flex items-center">Status:</label>
               {(['all', 'running', 'completed', 'failed'] as const).map((s) => (
-                <button
+                <motion.button
                   key={s}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => {
                     setStatus(s)
                     setPage(1)
                   }}
-                  className={`px-3 py-1 rounded-md text-sm font-medium transition-all ${
+                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                     status === s
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                      : 'bg-slate-900/50 text-slate-400 border border-slate-700/50 hover:border-slate-600'
+                      ? 'bg-[#2563eb] text-white shadow-lg shadow-blue-500/30'
+                      : 'bg-white/50 border border-blue-100/40 text-[#6b7280] hover:bg-white/70'
                   }`}
                 >
                   {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
-                </button>
+                </motion.button>
               ))}
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Loading State */}
         {isLoading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
-          </div>
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="flex items-center justify-center py-16"
+          >
+            <Loader2 className="h-8 w-8 animate-spin text-[#2563eb]" />
+          </motion.div>
         )}
 
         {/* Error State */}
         {error && !isLoading && (
-          <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
-              <div>
-                <p className="font-medium text-red-300">Failed to load runs</p>
-                <p className="text-sm text-red-200 mt-1">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="rounded-2xl border border-red-200 bg-red-50 p-6"
+          >
+            <div className="flex items-center gap-4">
+              <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="font-semibold text-red-900">Failed to load audits</p>
+                <p className="text-sm text-red-700 mt-1">
                   {(error as any).message || 'Please try again or check your connection.'}
                 </p>
               </div>
               <Button
                 size="sm"
-                variant="outline"
                 onClick={() => refetch()}
-                className="ml-auto"
+                className="bg-red-100 text-red-700 hover:bg-red-200"
               >
                 Retry
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Empty State */}
         {!isLoading && !error && runs.length === 0 && (
-          <div className="text-center py-12">
-            <div className="inline-block p-3 rounded-lg bg-slate-900/50 border border-slate-700/50 mb-4">
-              <Filter className="h-8 w-8 text-slate-500" />
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-16 rounded-2xl border border-blue-100/40 bg-white/50 backdrop-blur-sm"
+          >
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-100 mb-4">
+              <Filter className="h-7 w-7 text-[#2563eb]" />
             </div>
-            <h3 className="text-lg font-semibold text-white mb-2">No runs found</h3>
-            <p className="text-slate-400 mb-6">
+            <h3 className="text-lg font-semibold text-[#1f2937] mb-2">No audits found</h3>
+            <p className="text-[#6b7280] mb-6 max-w-sm mx-auto">
               {search || mode !== 'all' || status !== 'all'
-                ? 'Try adjusting your filters'
-                : 'Start with a manual audit or install on GitHub'}
+                ? 'Try adjusting your filters to find what you need'
+                : 'Get started by running your first quality audit'}
             </p>
             <Link href="/manual">
-              <Button>Start Manual Audit</Button>
+              <Button className="bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white hover:shadow-lg hover:shadow-blue-500/30">
+                Start Your First Audit
+              </Button>
             </Link>
-          </div>
+          </motion.div>
         )}
 
         {/* Runs Table */}
         {!isLoading && !error && runs.length > 0 && (
-          <div className="overflow-x-auto">
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="overflow-x-auto rounded-2xl border border-blue-100/40 bg-white/50 backdrop-blur-md"
+          >
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700/50">
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">URL</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Mode</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Status</th>
-                  <th className="px-4 py-3 text-center font-semibold text-slate-300">Score</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Duration</th>
-                  <th className="px-4 py-3 text-left font-semibold text-slate-300">Created</th>
-                  <th className="px-4 py-3 text-right font-semibold text-slate-300">Actions</th>
+                <tr className="border-b border-blue-100/40 bg-blue-50/50">
+                  <th className="px-6 py-4 text-left font-semibold text-[#1f2937]">URL</th>
+                  <th className="px-6 py-4 text-left font-semibold text-[#1f2937]">Type</th>
+                  <th className="px-6 py-4 text-left font-semibold text-[#1f2937]">Status</th>
+                  <th className="px-6 py-4 text-center font-semibold text-[#1f2937]">Score</th>
+                  <th className="px-6 py-4 text-left font-semibold text-[#1f2937]">Duration</th>
+                  <th className="px-6 py-4 text-left font-semibold text-[#1f2937]">Created</th>
+                  <th className="px-6 py-4 text-right font-semibold text-[#1f2937]">Action</th>
                 </tr>
               </thead>
-              <tbody>
-                {runs.map((run) => (
-                  <tr
+              <tbody className="divide-y divide-blue-100/30">
+                {runs.map((run, idx) => (
+                  <motion.tr
                     key={run.id}
-                    className="border-b border-slate-700/30 hover:bg-slate-900/50 transition-colors"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="hover:bg-blue-50/50 transition-colors"
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs text-slate-500">{run.id.slice(0, 8)}</span>
-                        <span className="text-slate-300 truncate max-w-xs" title={run.url}>
+                        <span className="font-mono text-xs text-[#6b7280]">{run.id.slice(0, 8)}</span>
+                        <span className="text-[#1f2937] font-medium truncate max-w-xs" title={run.url}>
                           {truncate(run.url, 40)}
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="inline-block px-2 py-1 rounded-md text-xs font-medium bg-slate-900/50 text-slate-300 border border-slate-700/50">
+                    <td className="px-6 py-4">
+                      <span className="inline-block px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-100 text-[#2563eb]">
                         {run.mode === 'manual' ? 'Manual' : 'CI'}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
-                      <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium border ${getStatusColor(run.status)}`}>
+                    <td className="px-6 py-4">
+                      <span className={`inline-block px-3 py-1.5 rounded-lg text-xs font-semibold border ${getStatusColor(run.status)}`}>
                         {run.status.charAt(0).toUpperCase() + run.status.slice(1)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-6 py-4 text-center">
                       {run.status === 'completed' && run.score !== undefined ? (
                         <div>
-                          <span className={`font-semibold ${getScoreColor(run.score)}`}>
+                          <span className={`font-bold text-sm ${getScoreColor(run.score)}`}>
                             {Math.round(run.score)}
                           </span>
-                          <span className="text-xs text-slate-500 ml-1">
+                          <span className="text-xs text-[#6b7280] ml-2">
                             ({getScoreLabel(run.score)})
                           </span>
                         </div>
                       ) : run.status === 'running' ? (
-                        <span className="text-slate-500 text-xs">Running...</span>
+                        <span className="text-[#6b7280] text-xs">Running...</span>
                       ) : (
-                        <span className="text-slate-500 text-xs">—</span>
+                        <span className="text-[#6b7280] text-xs">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-slate-400">
+                    <td className="px-6 py-4 text-[#6b7280]">
                       {run.duration && run.status === 'completed'
                         ? formatDuration(run.duration)
                         : '—'}
                     </td>
-                    <td className="px-4 py-3 text-slate-400">
+                    <td className="px-6 py-4 text-[#6b7280]">
                       {formatDate(run.createdAt)}
                     </td>
-                    <td className="px-4 py-3 text-right">
+                    <td className="px-6 py-4 text-right">
                       <Link href={`/runs/${run.id}`}>
-                        <Button size="sm" variant="ghost" className="text-emerald-400 hover:text-emerald-300">
+                        <Button size="sm" variant="ghost" className="text-[#2563eb] hover:text-[#1d4ed8] hover:bg-blue-50">
                           <ExternalLink className="h-4 w-4" />
-                          <span className="sr-only">View run details</span>
+                          <span className="sr-only">View audit details</span>
                         </Button>
                       </Link>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))}
               </tbody>
             </table>
-          </div>
+          </motion.div>
         )}
 
         {/* Pagination */}
         {!isLoading && !error && runs.length > 0 && (
-          <div className="flex items-center justify-between pt-6">
-            <div className="text-sm text-slate-400">
-              Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} runs
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="flex items-center justify-between pt-6"
+          >
+            <div className="text-sm text-[#6b7280] font-medium">
+              Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} audits
             </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 disabled={page === 1}
                 onClick={() => setPage(Math.max(1, page - 1))}
+                className="border-blue-100/60 text-[#2563eb] hover:bg-blue-50"
               >
                 Previous
               </Button>
@@ -243,13 +286,14 @@ export default function RunsPage() {
                 variant="outline"
                 disabled={!hasMore}
                 onClick={() => setPage(page + 1)}
+                className="border-blue-100/60 text-[#2563eb] hover:bg-blue-50"
               >
                 Next
               </Button>
             </div>
-          </div>
+          </motion.div>
         )}
-      </div>
+      </motion.div>
     </DashboardShell>
   )
 }
