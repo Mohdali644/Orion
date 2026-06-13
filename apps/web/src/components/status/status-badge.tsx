@@ -1,3 +1,4 @@
+// src/components/status/status-badge.tsx
 import { RunStatus, FindingSeverity } from '@/lib/types'
 import { getStatusColor, getSeverityColor } from '@/lib/utils'
 

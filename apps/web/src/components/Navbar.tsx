@@ -86,7 +86,7 @@ export function Navbar() {
     { label: 'Dashboard', href: '/' },
     { label: 'Runs', href: '/runs' },
     { label: 'Repos', href: '/repos' },
-    { label: 'Docs', href: '#' },
+    { label: 'Docs', href: '/docs' },
   ]
 
   return (
