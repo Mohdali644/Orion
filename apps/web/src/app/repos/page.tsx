@@ -162,26 +162,42 @@ export default function ReposPage() {
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center gap-3">
-                        <h3 className="font-semibold text-[#1f2937] text-lg">{repo.name}</h3>
-                        <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-semibold text-[#1f2937] text-lg truncate">
+                            {repo.fullName || `${repo.owner}/${repo.name}`}
+                          </h3>
+                        </div>
+                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold shrink-0 ${
+                          repo.status === 'configured' ? 'bg-green-100 text-green-700' :
+                          repo.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
                           <CheckCircle2 className="w-3 h-3" />
-                          Connected
+                          {repo.status === 'configured' ? 'Configured' : 
+                           repo.status === 'pending' ? 'Pending' : 'Disconnected'}
                         </span>
                       </div>
-                      <p className="text-[#6b7280] text-sm mt-1">{repo.description}</p>
-                      <div className="flex items-center gap-6 mt-4 text-sm text-[#6b7280]">
-                        <span>Last checked: {repo.lastChecked ? new Date(repo.lastChecked).toLocaleDateString() : 'Never'}</span>
-                        {typeof repo.url === 'string' && (
-                          <a
-                            href={repo.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[#2563eb] hover:underline"
-                          >
-                            View on GitHub
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
+                      <div className="flex items-center gap-6 mt-4 text-sm text-[#6b7280] flex-wrap">
+                        {repo.stagingUrl && (
+                          <span title={repo.stagingUrl} className="truncate">
+                            Staging: {new URL(repo.stagingUrl).hostname}
+                          </span>
                         )}
+                        {repo.passThreshold && (
+                          <span>Pass Threshold: {repo.passThreshold}%</span>
+                        )}
+                        {repo.lastChecked && (
+                          <span>Last checked: {new Date(repo.lastChecked).toLocaleDateString()}</span>
+                        )}
+                        <a
+                          href={`https://github.com/${repo.owner}/${repo.name}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[#2563eb] hover:underline"
+                        >
+                          View on GitHub
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
                       </div>
                     </div>
                   </div>
@@ -198,14 +214,14 @@ export default function ReposPage() {
             >
               <p className="text-[#6b7280] mb-4">Want to connect more repositories?</p>
               <a
-  href={process.env.NEXT_PUBLIC_GITHUB_APP_URL || "https://github.com/apps/orion-ai/installations/new"}
-  target="_blank"
-  rel="noopener noreferrer"
-  className="..."
->
-  <GitBranch className="w-4 h-4" />
-  Connect Another Repo
-</a>
+                href={process.env.NEXT_PUBLIC_GITHUB_APP_URL || "https://github.com/apps/orion-qa-agent/installations/new"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5 font-semibold no-underline"
+              >
+                <GitBranch className="w-4 h-4" />
+                Connect Another Repo
+              </a>
             </motion.div>
           </motion.div>
         )}
