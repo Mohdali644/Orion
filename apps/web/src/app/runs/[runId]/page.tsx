@@ -322,7 +322,7 @@ export default function RunDetailPage({ params }: PageProps) {
                 )}
               </span>
               <span className="text-xs text-[#8B949E]">{getRelativeTime(run.createdAt)}</span>
-              {(run.durationMs || run.duration) && run.status === 'completed' && (
+              {(run.durationMs || run.duration) && run.status === 'complete' && (
                 <span className="text-xs text-[#8B949E]">· {formatDuration((run.durationMs ?? run.duration ?? 0) / 1000)}</span>
               )}
             </div>
@@ -347,7 +347,7 @@ export default function RunDetailPage({ params }: PageProps) {
           )}
 
           {/* Score Section */}
-          {run.status === 'completed' && score !== undefined ? (
+          {run.status === 'complete' && score !== undefined ? (
             <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
               <ScoreRing score={score} size={140} />
               <div className="space-y-3 text-center sm:text-left">
@@ -476,7 +476,7 @@ export default function RunDetailPage({ params }: PageProps) {
               ))}
             </div>
           </motion.div>
-        ) : run.status === 'completed' ? (
+        ) : run.status === 'complete' ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

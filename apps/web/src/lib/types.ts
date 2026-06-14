@@ -4,7 +4,7 @@
 
 import type { ReactNode } from 'react'
 
-export type RunStatus = 'running' | 'completed' | 'failed' | 'pending'
+export type RunStatus = 'running' | 'complete' | 'failed' | 'queued'
 export type RunMode = 'manual' | 'ci'
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low'
 export type PipelineStageStatus = 'pending' | 'running' | 'completed' | 'error'
