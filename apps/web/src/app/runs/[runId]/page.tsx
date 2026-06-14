@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, use, useMemo } from 'react'
+import { useState, use, useMemo, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Navbar } from '@/components/Navbar'
-import { useRunDetail } from '@/lib/hooks'
+import { useRunDetail, useAgentLogs } from '@/lib/hooks'
 import { StatusBadge, SeverityBadge } from '@/components/status/status-badge'
 import {
   formatDate,
@@ -219,6 +219,7 @@ export default function RunDetailPage({ params }: PageProps) {
   const runId = resolvedParams.runId
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set())
   const [severityFilter, setSeverityFilter] = useState<string>('')
+  const logsContainerRef = useRef<HTMLDivElement>(null)
 
   const {
     data: run,
@@ -231,6 +232,39 @@ export default function RunDetailPage({ params }: PageProps) {
     error: any
     refetch: () => void
   }
+
+  const { logs, isConnected } = useAgentLogs(run?.status === 'running' ? runId : null)
+
+  // Auto-scroll logs
+  useEffect(() => {
+    if (logsContainerRef.current) {
+      logsContainerRef.current.scrollTop = logsContainerRef.current.scrollHeight
+    }
+  }, [logs])
+
+  const findings: Finding[] = run?.findings || []
+
+  // Count findings by severity
+  const severityCounts = useMemo(() => {
+    const counts: Record<'critical' | 'high' | 'medium' | 'low' | 'info', number> = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      info: 0,
+    }
+    findings.forEach((f) => {
+      const sev = f.severity as keyof typeof counts
+      if (counts[sev] !== undefined) counts[sev]++
+    })
+    return counts
+  }, [findings])
+
+  // Filter findings by selected severity
+  const filteredFindings = useMemo(() => {
+    if (!severityFilter) return findings
+    return findings.filter((f) => f.severity === severityFilter)
+  }, [findings, severityFilter])
 
   if (isLoading) {
     return (
@@ -283,30 +317,6 @@ export default function RunDetailPage({ params }: PageProps) {
     else newSet.add(id)
     setExpandedFindings(newSet)
   }
-
-  const findings: Finding[] = run.findings || []
-
-  // Count findings by severity
-  const severityCounts = useMemo(() => {
-    const counts: Record<'critical' | 'high' | 'medium' | 'low' | 'info', number> = {
-      critical: 0,
-      high: 0,
-      medium: 0,
-      low: 0,
-      info: 0,
-    }
-    findings.forEach((f) => {
-      const sev = f.severity as keyof typeof counts
-      if (counts[sev] !== undefined) counts[sev]++
-    })
-    return counts
-  }, [findings])
-
-  // Filter findings by selected severity
-  const filteredFindings = useMemo(() => {
-    if (!severityFilter) return findings
-    return findings.filter((f) => f.severity === severityFilter)
-  }, [findings, severityFilter])
 
   const score = run.overallScore ?? run.score
   const prNumber = run.prNumber ?? run.ciContext?.pr?.toString()
@@ -428,6 +438,61 @@ export default function RunDetailPage({ params }: PageProps) {
           </motion.div>
         )}
 
+        {/* ── Orchestration Stream (Console) ── */}
+        {run.status === 'running' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="rounded-2xl border border-[#30363D] bg-[#0D1117] p-4 md:p-6 mb-6 overflow-hidden flex flex-col"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="bricolage font-bold text-sm text-[#E6EDF3] flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-[#2F81F7]" />
+                Agent Orchestration Stream
+              </h2>
+              <span className={`flex items-center gap-1.5 text-xs ${isConnected ? 'text-[#3FB950]' : 'text-[#8B949E]'}`}>
+                <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-[#3FB950]' : 'bg-[#8B949E]'}`}></span>
+                {isConnected ? 'Connected' : 'Disconnected'}
+              </span>
+            </div>
+            <div 
+              ref={logsContainerRef}
+              className="flex-1 max-h-[300px] overflow-y-auto space-y-2 pr-2 font-mono text-xs text-[#8B949E] scrollbar-thin scrollbar-thumb-[#30363D] scrollbar-track-transparent"
+            >
+              {logs.length === 0 ? (
+                <p className="text-[#484F58] italic">Waiting for agent logs...</p>
+              ) : (
+                logs.map((log) => (
+                  <div key={log.id} className="flex gap-3">
+                    <span className="text-[#484F58] shrink-0 whitespace-nowrap">
+                      {new Date(log.timestamp).toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                    <span className={`shrink-0 w-24 truncate ${
+                      log.type === 'error' ? 'text-[#F85149]' :
+                      log.type === 'agent_started' ? 'text-[#3FB950]' :
+                      log.type === 'agent_completed' ? 'text-[#A371F7]' :
+                      'text-[#2F81F7]'
+                    }`}>
+                      [{log.agent}]
+                    </span>
+                    <span className={`flex-1 ${
+                      log.type === 'error' ? 'text-[#F85149]' : 'text-[#E6EDF3]'
+                    }`}>
+                      {log.message || log.type}
+                      {log.meta && Object.keys(log.meta).length > 0 && (
+                        <span className="text-[#484F58] ml-2">
+                          {JSON.stringify(log.meta)}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </motion.div>
+        )}
+
         {/* ── Findings ── */}
         {findings.length > 0 ? (
           <motion.div
@@ -533,15 +598,15 @@ export default function RunDetailPage({ params }: PageProps) {
                     </button>
 
                     {expandedFindings.has(finding.id) && (
-                      <div className="border-t border-[#F0F2F5] p-4 bg-[#FAFBFC] space-y-4">
+                      <div className="border-t border-[#F0F2F5] p-5 bg-[#FAFBFC] space-y-5">
                         <div>
-                          <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Description</h4>
-                          <p className="text-sm text-[#6b7280]">{finding.detail || finding.description}</p>
+                          <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Issue Details</h4>
+                          <p className="text-sm text-[#4b5563] leading-relaxed">{finding.detail || finding.description}</p>
                         </div>
 
                         {finding.codeSnippet && (
                           <div>
-                            <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Code</h4>
+                            <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Code Context</h4>
                             <pre className="p-3 rounded-lg bg-[#1f2937] text-xs text-[#e1e8ed] overflow-x-auto border border-[#374151]">
                               <code>{finding.codeSnippet}</code>
                             </pre>
@@ -549,12 +614,14 @@ export default function RunDetailPage({ params }: PageProps) {
                         )}
 
                         {(finding.fixSuggestion || finding.suggestedFix) && (
-                          <div className="p-3 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5]">
-                            <h4 className="text-sm font-semibold text-[#1f2937] mb-1 flex items-center gap-2">
+                          <div className="p-4 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5]">
+                            <h4 className="text-sm font-semibold text-[#1f2937] mb-2 flex items-center gap-2">
                               <Sparkles className="w-4 h-4 text-[#8250DF]" />
-                              Suggested Fix
+                              Simple Fix Suggestion
                             </h4>
-                            <p className="text-sm text-[#6b7280]">{finding.fixSuggestion || finding.suggestedFix}</p>
+                            <pre className="p-3 rounded-lg bg-[#1f2937] text-xs text-[#e1e8ed] overflow-x-auto border border-[#374151] whitespace-pre-wrap">
+                              <code>{finding.fixSuggestion || finding.suggestedFix}</code>
+                            </pre>
                           </div>
                         )}
 

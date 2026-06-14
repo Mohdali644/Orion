@@ -13,3 +13,4 @@ export {
   useTestRepo,
 } from './useMutations'
 export { usePRReview } from './usePRReview'
+export { useAgentLogs } from './useAgentLogs'
