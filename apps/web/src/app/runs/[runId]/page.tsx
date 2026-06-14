@@ -30,12 +30,17 @@ import {
 interface Finding {
   id: string
   title: string
-  description: string
+  detail: string
+  description?: string // alias
   severity: 'critical' | 'high' | 'medium' | 'low'
-  location?: string
+  file?: string
+  location?: string // alias
+  fixSuggestion?: string
+  suggestedFix?: string // alias
   codeSnippet?: string
-  suggestedFix?: string
   autoFixable?: boolean
+  agent?: string
+  confidence?: string
 }
 
 interface PipelineStage {
@@ -46,14 +51,26 @@ interface PipelineStage {
 
 interface RunDetail {
   id: string
+  runId: string
   url: string
-  status: 'completed' | 'running' | 'failed'
+  status: string
   mode: 'manual' | 'ci'
   createdAt: string
+  completedAt?: string
+  durationMs?: number
   duration?: number
+  overallScore?: number
   score?: number
+  passed?: boolean
   findings?: Finding[]
   pipelineStages?: PipelineStage[]
+  ciContext?: {
+    pr?: number
+    sha?: string
+    branch?: string
+    repo?: string
+    owner?: string
+  }
   prNumber?: string
   branch?: string
   commitSha?: string
@@ -256,6 +273,10 @@ export default function RunDetailPage({ params }: PageProps) {
   const findings: Finding[] = run.findings || []
   const criticalFindings = findings.filter((f) => f.severity === 'critical').length
   const highFindings = findings.filter((f) => f.severity === 'high').length
+  const score = run.overallScore ?? run.score
+  const prNumber = run.prNumber ?? run.ciContext?.pr?.toString()
+  const branch = run.branch ?? run.ciContext?.branch
+  const commitSha = run.commitSha ?? run.ciContext?.sha
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#ffffff] via-[#f8f9fb] to-[#f0f3f8]">
@@ -301,8 +322,8 @@ export default function RunDetailPage({ params }: PageProps) {
                 )}
               </span>
               <span className="text-xs text-[#8B949E]">{getRelativeTime(run.createdAt)}</span>
-              {run.duration && run.status === 'completed' && (
-                <span className="text-xs text-[#8B949E]">· {formatDuration(run.duration)}</span>
+              {(run.durationMs || run.duration) && run.status === 'completed' && (
+                <span className="text-xs text-[#8B949E]">· {formatDuration((run.durationMs ?? run.duration ?? 0) / 1000)}</span>
               )}
             </div>
           </div>
@@ -313,31 +334,31 @@ export default function RunDetailPage({ params }: PageProps) {
               <div className="flex items-center gap-2 text-sm">
                 <GitBranch className="w-4 h-4 text-[#0969DA]" />
                 <span className="text-[#1f2937]">
-                  Triggered by <span className="font-semibold">PR #{run.prNumber || '—'}</span>
-                  {run.branch && (
-                    <> on <code className="bg-[#C2DBF5]/30 px-1.5 py-0.5 rounded text-xs font-mono">{run.branch}</code></>
+                  Triggered by <span className="font-semibold">PR #{prNumber || '—'}</span>
+                  {branch && (
+                    <> on <code className="bg-[#C2DBF5]/30 px-1.5 py-0.5 rounded text-xs font-mono">{branch}</code></>
                   )}
                 </span>
               </div>
-              {run.commitSha && (
-                <p className="text-xs text-[#656D76] mt-1.5 font-mono">Commit: {run.commitSha.slice(0, 7)}</p>
+              {commitSha && (
+                <p className="text-xs text-[#656D76] mt-1.5 font-mono">Commit: {commitSha.slice(0, 7)}</p>
               )}
             </div>
           )}
 
           {/* Score Section */}
-          {run.status === 'completed' && run.score !== undefined ? (
+          {run.status === 'completed' && score !== undefined ? (
             <div className="flex flex-col sm:flex-row gap-8 items-center sm:items-start">
-              <ScoreRing score={run.score} size={140} />
+              <ScoreRing score={score} size={140} />
               <div className="space-y-3 text-center sm:text-left">
                 <div>
                   <p className="text-sm text-[#8B949E] mb-0.5">Orion Score</p>
-                  <p className="bricolage font-extrabold text-3xl text-[#1f2937]">{Math.round(run.score)}/100</p>
+                  <p className="bricolage font-extrabold text-3xl text-[#1f2937]">{Math.round(score)}/100</p>
                 </div>
                 <div>
                   <p className="text-sm text-[#8B949E] mb-0.5">Result</p>
-                  <p className="font-bold text-lg" style={{ color: run.score >= 70 ? '#1A7F37' : '#CF222E' }}>
-                    {run.score >= 70 ? '✓ Passed' : '✗ Failed'}
+                  <p className="font-bold text-lg" style={{ color: run.passed !== undefined ? (run.passed ? '#1A7F37' : '#CF222E') : (score >= 70 ? '#1A7F37' : '#CF222E') }}>
+                    {(run.passed !== undefined ? run.passed : score >= 70) ? '✓ Passed' : '✗ Failed'}
                   </p>
                 </div>
                 {findings.length > 0 && (
@@ -397,9 +418,9 @@ export default function RunDetailPage({ params }: PageProps) {
                         <SeverityBadge severity={finding.severity} />
                         <h3 className="font-semibold text-[#1f2937]">{finding.title}</h3>
                       </div>
-                      <p className="text-sm text-[#6b7280] line-clamp-2">{finding.description}</p>
-                      {finding.location && (
-                        <p className="text-xs text-[#8B949E] font-mono mt-1.5">{finding.location}</p>
+                      <p className="text-sm text-[#6b7280] line-clamp-2">{finding.detail || finding.description}</p>
+                      {(finding.file || finding.location) && (
+                        <p className="text-xs text-[#8B949E] font-mono mt-1.5">{finding.file || finding.location}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3 shrink-0">
@@ -421,7 +442,7 @@ export default function RunDetailPage({ params }: PageProps) {
                     <div className="border-t border-[#F0F2F5] p-4 bg-[#FAFBFC] space-y-4">
                       <div>
                         <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Description</h4>
-                        <p className="text-sm text-[#6b7280]">{finding.description}</p>
+                        <p className="text-sm text-[#6b7280]">{finding.detail || finding.description}</p>
                       </div>
 
                       {finding.codeSnippet && (
@@ -433,13 +454,13 @@ export default function RunDetailPage({ params }: PageProps) {
                         </div>
                       )}
 
-                      {finding.suggestedFix && (
+                      {(finding.fixSuggestion || finding.suggestedFix) && (
                         <div className="p-3 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5]">
                           <h4 className="text-sm font-semibold text-[#1f2937] mb-1 flex items-center gap-2">
                             <Sparkles className="w-4 h-4 text-[#8250DF]" />
                             Suggested Fix
                           </h4>
-                          <p className="text-sm text-[#6b7280]">{finding.suggestedFix}</p>
+                          <p className="text-sm text-[#6b7280]">{finding.fixSuggestion || finding.suggestedFix}</p>
                         </div>
                       )}
 

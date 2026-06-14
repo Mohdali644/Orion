@@ -3,14 +3,14 @@ import { RunStatus, FindingSeverity } from '@/lib/types'
 import { getStatusColor, getSeverityColor } from '@/lib/utils'
 
 interface StatusBadgeProps {
-  status: RunStatus
+  status: string
   className?: string
 }
 
 export function StatusBadge({ status, className }: StatusBadgeProps) {
   return (
     <span
-      className={`inline-block px-3 py-1 rounded-md text-sm font-medium border ${getStatusColor(status)} ${className}`}
+      className={`inline-block px-3 py-1 rounded-md text-sm font-medium border ${getStatusColor(status as RunStatus)} ${className}`}
     >
       {status ? status.charAt(0).toUpperCase() + status.slice(1) : ''}
     </span>

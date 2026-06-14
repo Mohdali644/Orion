@@ -264,7 +264,8 @@ export default function DashboardPage() {
     mutationFn: (url: string) => runsApi.createRun({ url, mode: 'manual' }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["runs"] })
-      router.push(`/runs/${data.id}`)
+      const targetId = (data as any).runId || data.id
+      router.push(`/runs/${targetId}`)
     },
   })
 
@@ -415,7 +416,7 @@ export default function DashboardPage() {
 
                     <div className="flex flex-wrap gap-3">
                       <button
-                        onClick={() => router.push(`/runs/${lastRun.id}`)}
+                        onClick={() => router.push(`/runs/${(lastRun as any).runId || lastRun.id}`)}
                         className="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-50 text-[#1f2937] border border-blue-200 hover:border-blue-300 hover:bg-blue-100 transition-all flex items-center gap-2"
                       >
                         <FileText className="w-4 h-4" />
@@ -423,7 +424,7 @@ export default function DashboardPage() {
                       </button>
                       {lastRun.pass === false && (
                         <button
-                          onClick={() => router.push(`/runs/${lastRun.id}?action=fix`)}
+                          onClick={() => router.push(`/runs/${(lastRun as any).runId || lastRun.id}?action=fix`)}
                           className="px-4 py-2 bg-gradient-to-r from-[#7c3aed] to-[#6366f1] text-white text-sm font-semibold rounded-lg hover:shadow-lg hover:shadow-purple-500/30 transition-all hover:-translate-y-0.5 flex items-center gap-2"
                         >
                           <Sparkles className="w-4 h-4" />
@@ -510,7 +511,7 @@ export default function DashboardPage() {
                       runs.map((run) => (
                         <tr
                           key={run.id}
-                          onClick={() => router.push(`/runs/${run.id}`)}
+                          onClick={() => router.push(`/runs/${(run as any).runId || run.id}`)}
                           className="border-b border-blue-100/20 hover:bg-blue-50/30 transition-colors cursor-pointer group"
                         >
                           <td className="p-4">

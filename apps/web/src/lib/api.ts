@@ -25,6 +25,41 @@ const axiosInstance: AxiosInstance = axios.create({
   },
 })
 
+// Map frontend 'completed' status filter to backend 'complete' database enum
+axiosInstance.interceptors.request.use(
+  (config) => {
+    if (config.params && config.params.status === 'completed') {
+      config.params = {
+        ...config.params,
+        status: 'complete',
+      }
+    }
+    return config
+  },
+  (error) => Promise.reject(error)
+)
+
+// Helper to recursively map status field from 'complete' to 'completed'
+function mapStatus(val: any): any {
+  if (!val) return val
+  if (Array.isArray(val)) {
+    return val.map(mapStatus)
+  }
+  if (typeof val === 'object') {
+    const newVal = { ...val }
+    if (newVal.status === 'complete') {
+      newVal.status = 'completed'
+    }
+    for (const key of Object.keys(newVal)) {
+      if (newVal[key] && typeof newVal[key] === 'object') {
+        newVal[key] = mapStatus(newVal[key])
+      }
+    }
+    return newVal
+  }
+  return val
+}
+
 // Unpack the standard { success, data, pagination } server envelope
 axiosInstance.interceptors.response.use(
   (response) => {
@@ -42,11 +77,11 @@ axiosInstance.interceptors.response.use(
       
       if (payload.pagination) {
         response.data = {
-          data: payload.data,
+          data: mapStatus(payload.data),
           ...payload.pagination,
         }
       } else {
-        response.data = payload.data
+        response.data = mapStatus(payload.data)
       }
     }
     return response

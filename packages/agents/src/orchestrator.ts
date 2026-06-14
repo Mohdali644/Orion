@@ -155,6 +155,11 @@ export const runOrchestrated = async (
   while (steps < MAX_STEPS) {
     steps++;
 
+    if (completedAgents.includes("visualization_agent")) {
+      console.log(`[orchestrator] visualization_agent complete — ending pipeline`);
+      break;
+    }
+
     const remainingAgents = AGENT_ORDER.filter(
       (a) => !completedAgents.includes(a)
     );
