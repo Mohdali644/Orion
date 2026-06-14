@@ -26,7 +26,7 @@ export default function ManualAuditPage() {
     try {
       setIsLoading(true)
       setError(null)
-      const result = await runsApi.createRun({ url: url.trim() })
+      const result = await runsApi.createRun({ url: url.trim(), mode: 'manual' })
       router.push(`/runs/${result.id}`)
     } catch (err: any) {
       setError(err.message || 'Failed to create audit. Please try again.')

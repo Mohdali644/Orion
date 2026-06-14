@@ -2,6 +2,8 @@
  * Shared TypeScript types for Orion Frontend
  */
 
+import type { ReactNode } from 'react'
+
 export type RunStatus = 'running' | 'completed' | 'failed' | 'pending'
 export type RunMode = 'manual' | 'ci'
 export type FindingSeverity = 'critical' | 'high' | 'medium' | 'low'
@@ -52,13 +54,13 @@ export interface Run {
 }
 
 export interface ConnectedRepo {
-  description: ReactNode
-  lastChecked: any
-  url: import("react").JSX.Element
   id: string
   name: string
   owner: string
   fullName: string
+  description?: string
+  url?: string
+  lastChecked?: string
   installationId: string
   stagingUrl: string
   passThreshold: number
@@ -81,8 +83,10 @@ export interface RepoDetail extends ConnectedRepo {
 
 export interface CreateRunRequest {
   url: string
+  mode: 'manual' | 'ci'
   name?: string
   tags?: string[]
+  prevRunId?: string
 }
 
 export interface UpdateRepoRequest {

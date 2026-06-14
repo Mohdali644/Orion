@@ -4,6 +4,7 @@ import runsRoutes from "./routes/runs.routes";
 import findingsRoutes from "./routes/findings.routes";
 import webhookRoutes from "./routes/webhook.routes";
 import repoRoutes from "./routes/repos.routes";
+import notificationsRoutes from "./routes/notifications.routes";
 import { connectRepo, repoCallback } from "./controllers/repos.controller";
 import cors from "cors";
 
@@ -16,6 +17,7 @@ app.use("/health", healthRoutes);
 app.use("/api/v1/runs", runsRoutes);
 app.use("/api/v1/findings", findingsRoutes);
 app.use("/api/v1/webhooks", webhookRoutes);
+app.use("/api/v1/notifications", notificationsRoutes);
 
 // ── These must be registered BEFORE the repos router ──
 app.get("/api/v1/repos/connect",  connectRepo);

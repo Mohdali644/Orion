@@ -172,7 +172,7 @@ export function Navbar() {
 
   const { data: notificationsData } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => api.get<Notification[]>('/notifications').then((res) => res.data),
+    queryFn: () => api.get<{ success: boolean; data: Notification[] }>('/notifications').then((res) => res.data.data),
     refetchInterval: 30000,
     staleTime: 10000,
   })

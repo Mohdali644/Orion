@@ -261,7 +261,7 @@ export default function DashboardPage() {
   })
 
   const createRunMutation = useMutation({
-    mutationFn: (url: string) => runsApi.createRun({ url }),
+    mutationFn: (url: string) => runsApi.createRun({ url, mode: 'manual' }),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["runs"] })
       router.push(`/runs/${data.id}`)
