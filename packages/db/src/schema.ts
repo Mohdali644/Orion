@@ -204,6 +204,7 @@ export const prReviews = pgTable("pr_reviews", {
       severity: "critical" | "high" | "medium" | "low" | "info";
       title: string;
       detail: string;
+      impact?: string;
       line?: number;
       fixSuggestion?: string;
       confidence: "high" | "medium" | "low";

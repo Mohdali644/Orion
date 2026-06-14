@@ -9,9 +9,9 @@ export function useRunDetail(runId: string | null) {
     enabled: !!runId,
     staleTime: 2000,
     refetchInterval: (query) => {
-      // Poll every 2s while running
+      // Poll every 2s while running or queued
       const data = query.state.data as Run | undefined
-      return data?.status === 'running' ? 2000 : false
+      return data?.status === 'running' || data?.status === 'queued' ? 2000 : false
     },
   })
 }
