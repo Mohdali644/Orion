@@ -17,6 +17,12 @@ import {
   Play,
   BookOpen,
   BarChart3,
+  Globe,
+  Check,
+  Loader2,
+  ExternalLink,
+  ChevronRight,
+  AlertCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import api from '@/lib/api'
@@ -45,119 +51,355 @@ function getRelativeTime(dateStr: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-// // ──────────────────────────────────────────────────────────
-// // Command Palette Modal
-// // ──────────────────────────────────────────────────────────
-// function CommandPalette({ open, onClose }: { open: boolean; onClose: () => void }) {
-//   const router = useRouter()
-//   const [query, setQuery] = useState('')
-//   const inputRef = useRef<HTMLInputElement>(null)
+// ──────────────────────────────────────────────────────────
+// Register Repo Modal
+// ──────────────────────────────────────────────────────────
+function RegisterRepoModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const router = useRouter()
+  const [step, setStep] = useState<1 | 2 | 3>(1)
+  const [repoName, setRepoName] = useState('')
+  const [repoOwner, setRepoOwner] = useState('')
+  const [stagingUrl, setStagingUrl] = useState('')
+  const [passThreshold, setPassThreshold] = useState(70)
+  const [autoFix, setAutoFix] = useState(true)
+  const [ignoredPaths, setIgnoredPaths] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [installationId, setInstallationId] = useState<string | null>(null)
 
-//   const commands = [
-//     { label: 'Dashboard', icon: BarChart3, action: () => router.push('/'), keywords: 'home' },
-//     { label: 'View All Runs', icon: Play, action: () => router.push('/runs'), keywords: 'runs history audit' },
-//     { label: 'New Audit', icon: Search, action: () => { router.push('/'); onClose(); setTimeout(() => document.querySelector<HTMLInputElement>('input[type="url"]')?.focus(), 300) }, keywords: 'scan analyze url' },
-//     { label: 'Connected Repos', icon: GitBranch, action: () => router.push('/repos'), keywords: 'repositories github' },
-//     { label: 'Documentation', icon: BookOpen, action: () => router.push('/docs'), keywords: 'docs help guide' },
-//     { label: 'Settings', icon: Settings, action: () => router.push('/settings'), keywords: 'preferences config' },
-//   ]
+  const githubAppUrl = process.env.NEXT_PUBLIC_GITHUB_APP_URL || 'https://github.com/apps/orion-qa-agent/installations/new'
 
-//   const filtered = query.trim()
-//     ? commands.filter(
-//         (cmd) =>
-//           cmd.label.toLowerCase().includes(query.toLowerCase()) ||
-//           cmd.keywords.toLowerCase().includes(query.toLowerCase())
-//       )
-//     : commands
+  // Reset state when modal opens
+  useEffect(() => {
+    if (open) {
+      setStep(1)
+      setRepoName('')
+      setRepoOwner('')
+      setStagingUrl('')
+      setPassThreshold(70)
+      setAutoFix(true)
+      setIgnoredPaths('')
+      setIsLoading(false)
+      setIsSaving(false)
+      setErrorMessage(null)
+      setInstallationId(null)
+    }
+  }, [open])
 
-//   useEffect(() => {
-//     if (open) {
-//       setTimeout(() => inputRef.current?.focus(), 100)
-//       setQuery('')
-//     }
-//   }, [open])
+  // Step 1: Prompt user to install GitHub App
+  const handleInstallOnGitHub = () => {
+    window.open(githubAppUrl, '_blank')
+  }
 
-//   useEffect(() => {
-//     const handleKeyDown = (e: KeyboardEvent) => {
-//       if (e.key === 'Escape') onClose()
-//       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-//         e.preventDefault()
-//         open ? onClose() : onClose() // toggle handled by parent
-//       }
-//     }
-//     document.addEventListener('keydown', handleKeyDown)
-//     return () => document.removeEventListener('keydown', handleKeyDown)
-//   }, [open, onClose])
+  // Step 2: Handle manual repo registration
+  const handleManualRegister = () => {
+    setStep(2)
+  }
 
-//   if (!open) return null
+  // Step 3: Save configuration
+  const handleSave = async () => {
+    if (!stagingUrl.trim()) {
+      setErrorMessage('Staging URL is required.')
+      return
+    }
 
-//   return (
-//     <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[20vh]">
-//       {/* Backdrop */}
-//       <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+    try {
+      setIsSaving(true)
+      setErrorMessage(null)
 
-//       {/* Modal */}
-//       <motion.div
-//         initial={{ opacity: 0, scale: 0.95, y: -10 }}
-//         animate={{ opacity: 1, scale: 1, y: 0 }}
-//         exit={{ opacity: 0, scale: 0.95, y: -10 }}
-//         transition={{ duration: 0.15 }}
-//         className="relative w-full max-w-lg bg-white rounded-2xl border border-[#D0D7DE] shadow-[0_16px_48px_rgba(0,0,0,0.12)] overflow-hidden"
-//       >
-//         {/* Search input */}
-//         <div className="flex items-center gap-3 px-4 py-3 border-b border-[#F0F2F5]">
-//           <Search className="w-5 h-5 text-[#8B949E]" />
-//           <input
-//             ref={inputRef}
-//             type="text"
-//             value={query}
-//             onChange={(e) => setQuery(e.target.value)}
-//             placeholder="Type a command or search..."
-//             className="flex-1 text-sm bg-transparent outline-none text-[#1f2937] placeholder-[#8B949E]"
-//           />
-//           <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-semibold text-[#8B949E] bg-[#F0F2F5] rounded-md border border-[#D0D7DE]">
-//             ESC
-//           </kbd>
-//         </div>
+      await api.post('/repos', {
+        owner: repoOwner,
+        repo: repoName,
+        installationId: installationId || 'manual',
+        stagingUrl: stagingUrl.trim(),
+        passThreshold,
+        autoFixEnabled: autoFix,
+        ignoredPaths: ignoredPaths.trim() || undefined,
+      })
 
-//         {/* Command list */}
-//         <div className="max-h-[320px] overflow-y-auto p-2">
-//           {filtered.length === 0 ? (
-//             <div className="py-8 text-center">
-//               <p className="text-sm text-[#8B949E]">No results found</p>
-//             </div>
-//           ) : (
-//             filtered.map((cmd, i) => (
-//               <button
-//                 key={cmd.label}
-//                 onClick={() => {
-//                   cmd.action()
-//                   onClose()
-//                 }}
-//                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left hover:bg-blue-50 transition-colors"
-//               >
-//                 <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
-//                   <cmd.icon className="w-4 h-4 text-[#2563eb]" />
-//                 </div>
-//                 <span className="text-sm font-medium text-[#1f2937]">{cmd.label}</span>
-//                 {i === 0 && (
-//                   <span className="ml-auto text-[10px] text-[#8B949E]">⌘K</span>
-//                 )}
-//               </button>
-//             ))
-//           )}
-//         </div>
+      setStep(3)
+    } catch (err: any) {
+      setErrorMessage(err?.message || 'Failed to register repository. Please try again.')
+    } finally {
+      setIsSaving(false)
+    }
+  }
 
-//         {/* Footer */}
-//         <div className="flex items-center gap-4 px-4 py-2.5 border-t border-[#F0F2F5] text-[10px] text-[#8B949E]">
-//           <span>↑↓ Navigate</span>
-//           <span>↵ Select</span>
-//           <span>Esc Dismiss</span>
-//         </div>
-//       </motion.div>
-//     </div>
-//   )
-// }
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" onClick={onClose} />
+
+      {/* Modal */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 10 }}
+        className="relative w-full max-w-[520px] bg-white rounded-3xl border border-[#F0F2F5] shadow-[0_16px_48px_rgba(0,0,0,0.12)] p-8 overflow-hidden"
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-lg text-[#8B949E] hover:text-[#1F2328] hover:bg-[#F0F2F5] transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
+
+        <AnimatePresence mode="wait">
+          {/* ── Step 1: Choose Installation Method ── */}
+          {step === 1 && (
+            <motion.div
+              key="step1"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center text-center py-6"
+            >
+              <div className="w-16 h-16 rounded-full bg-[#F0F6FC] text-[#0969DA] flex items-center justify-center border-4 border-[#C2DBF5] mb-6">
+                <GitBranch size={32} />
+              </div>
+              <h2 className="bricolage font-extrabold text-2xl text-[#1F2328] tracking-tight mb-3">
+                Register a Repository
+              </h2>
+              <p className="text-sm text-[#656D76] mb-8 max-w-[360px]">
+                Connect your GitHub repository to enable automatic PR audits and self-healing fixes.
+              </p>
+
+              <div className="flex flex-col gap-3 w-full">
+                {/* Install via GitHub App */}
+                <button
+                  onClick={handleInstallOnGitHub}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl bg-[#0969DA] text-white font-semibold text-sm hover:bg-[#0558B7] transition-colors text-left group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                    <GitBranch className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold">Install GitHub App</p>
+                    <p className="text-xs text-white/70 mt-0.5">Auto-sync repos with one click</p>
+                  </div>
+                  <ExternalLink className="w-4 h-4 shrink-0 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+
+                {/* Manual Registration */}
+                <button
+                  onClick={handleManualRegister}
+                  className="w-full flex items-center gap-3 p-4 rounded-xl border border-[#D0D7DE] bg-white text-[#1F2328] font-semibold text-sm hover:bg-[#F0F2F5] transition-colors text-left group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-[#F0F2F5] flex items-center justify-center shrink-0">
+                    <Settings className="w-5 h-5 text-[#656D76]" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="font-bold">Manual Registration</p>
+                    <p className="text-xs text-[#656D76] mt-0.5">Enter repo details yourself</p>
+                  </div>
+                  <ChevronRight className="w-4 h-4 shrink-0 text-[#8B949E] group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 2: Manual Registration Form ── */}
+          {step === 2 && (
+            <motion.div
+              key="step2"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <div className="flex flex-col items-center text-center mb-8">
+                <div className="w-16 h-16 rounded-full bg-[#F0F6FC] text-[#0969DA] flex items-center justify-center border-4 border-[#C2DBF5] mb-4">
+                  <Settings size={30} />
+                </div>
+                <h2 className="bricolage font-extrabold text-[26px] text-[#1F2328] tracking-tight mb-2">
+                  Register Repository
+                </h2>
+                <p className="text-sm text-[#656D76]">
+                  Enter your repository details and configuration.
+                </p>
+              </div>
+
+              {errorMessage && (
+                <div className="mb-6 p-4 rounded-xl bg-[#FFEBE9] border border-[#FFCCC9] flex items-center gap-3">
+                  <AlertCircle className="w-5 h-5 text-[#CF222E] shrink-0" />
+                  <p className="text-sm text-[#CF222E]">{errorMessage}</p>
+                </div>
+              )}
+
+              <div className="space-y-5">
+                {/* Repo Owner + Name */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[13px] font-bold text-[#1F2328] mb-1.5">
+                      Owner <span className="text-[#CF222E]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Mohfazam"
+                      value={repoOwner}
+                      onChange={(e) => setRepoOwner(e.target.value)}
+                      className="w-full h-[46px] px-3.5 text-sm text-[#1F2328] bg-white border border-[#D0D7DE] rounded-xl outline-none focus:border-[#0969DA] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.14)] transition-all placeholder:text-[#8B949E]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[13px] font-bold text-[#1F2328] mb-1.5">
+                      Repository <span className="text-[#CF222E]">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. FOODZY"
+                      value={repoName}
+                      onChange={(e) => setRepoName(e.target.value)}
+                      className="w-full h-[46px] px-3.5 text-sm text-[#1F2328] bg-white border border-[#D0D7DE] rounded-xl outline-none focus:border-[#0969DA] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.14)] transition-all placeholder:text-[#8B949E]"
+                    />
+                  </div>
+                </div>
+
+                {/* Staging URL */}
+                <div>
+                  <label className="block text-[13px] font-bold text-[#1F2328] mb-1.5">
+                    Staging URL <span className="text-[#CF222E]">*</span>
+                  </label>
+                  <div className="relative">
+                    <Globe size={15} className="absolute top-1/2 -translate-y-1/2 left-3.5 text-[#8B949E] pointer-events-none" />
+                    <input
+                      type="url"
+                      placeholder="https://foodzy-delta.vercel.app"
+                      value={stagingUrl}
+                      onChange={(e) => setStagingUrl(e.target.value)}
+                      className="w-full h-[46px] pl-[38px] pr-3.5 text-sm text-[#1F2328] font-mono bg-white border border-[#D0D7DE] rounded-xl outline-none focus:border-[#0969DA] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.14)] transition-all placeholder:text-[#8B949E]"
+                    />
+                  </div>
+                </div>
+
+                {/* Pass Threshold */}
+                <div>
+                  <label className="block text-[13px] font-bold text-[#1F2328] mb-1.5">
+                    Pass Threshold: <span className="text-[#0969DA]">{passThreshold}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    step="5"
+                    value={passThreshold}
+                    onChange={(e) => setPassThreshold(parseInt(e.target.value))}
+                    className="w-full h-2 bg-[#D0D7DE] rounded-lg appearance-none cursor-pointer accent-[#0969DA]"
+                  />
+                  <p className="text-xs text-[#656D76] mt-1.5">Quality score must be at least {passThreshold}% to pass</p>
+                </div>
+
+                {/* Auto-Fix Toggle */}
+                <div className="flex items-center justify-between p-3 rounded-xl bg-white border border-[#D0D7DE]">
+                  <span className="text-[13px] font-semibold text-[#1F2328]">Enable Auto-Fix PRs</span>
+                  <button
+                    type="button"
+                    onClick={() => setAutoFix(!autoFix)}
+                    className={`relative w-12 h-6 rounded-full transition-colors ${autoFix ? 'bg-[#1A7F37]' : 'bg-[#D0D7DE]'}`}
+                  >
+                    <motion.div
+                      animate={{ x: autoFix ? 24 : 2 }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+                      className="w-5 h-5 bg-white rounded-full absolute top-0.5 left-0.5"
+                    />
+                  </button>
+                </div>
+
+                {/* Ignored Paths */}
+                <div>
+                  <label className="block text-[13px] font-bold text-[#1F2328] mb-1.5">
+                    Ignored Paths (optional)
+                  </label>
+                  <textarea
+                    placeholder="dist, node_modules, .next"
+                    value={ignoredPaths}
+                    onChange={(e) => setIgnoredPaths(e.target.value)}
+                    className="w-full h-[80px] p-3.5 text-sm text-[#1F2328] font-mono bg-white border border-[#D0D7DE] rounded-xl outline-none focus:border-[#0969DA] focus:shadow-[0_0_0_3px_rgba(9,105,218,0.14)] transition-all placeholder:text-[#8B949E] resize-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 mt-8">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving || !stagingUrl.trim() || !repoOwner.trim() || !repoName.trim()}
+                  className="w-full h-12 flex items-center justify-center gap-2 bg-[#0969DA] text-white font-bold text-sm rounded-xl hover:bg-[#0558B7] hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none shadow-[0_2px_12px_rgba(9,105,218,0.28)]"
+                >
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Save & Activate
+                    </>
+                  )}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="text-[11.5px] text-[#8B949E] text-center font-medium hover:text-[#656D76] transition-colors"
+                >
+                  ← Back
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ── Step 3: Success ── */}
+          {step === 3 && (
+            <motion.div
+              key="step3"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center text-center py-6"
+            >
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+                className="w-20 h-20 rounded-full bg-[#E6F4EA] text-[#1A7F37] flex items-center justify-center border-[5px] border-[#A7F3D0] mb-6"
+              >
+                <Check size={36} />
+              </motion.div>
+
+              <h2 className="bricolage font-extrabold text-[28px] text-[#1F2328] tracking-tight mb-2">
+                Orion is now watching your repo
+              </h2>
+              <p className="text-sm text-[#656D76] mb-8 max-w-[360px]">
+                Every PR will be automatically audited for quality regressions. You'll get instant feedback and suggested fixes.
+              </p>
+
+              <div className="flex flex-col gap-3 w-full">
+                <button
+                  onClick={() => {
+                    onClose()
+                    router.push('/repos')
+                  }}
+                  className="w-full h-12 flex items-center justify-center gap-2 bg-[#0969DA] text-white font-bold text-sm rounded-xl hover:bg-[#0558B7] transition-colors"
+                >
+                  <GitBranch size={16} />
+                  View Repositories
+                </button>
+                <button
+                  onClick={onClose}
+                  className="text-[11.5px] text-[#8B949E] text-center font-medium hover:text-[#656D76] transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </div>
+  )
+}
 
 // ──────────────────────────────────────────────────────────
 // Navbar
@@ -167,7 +409,7 @@ export function Navbar() {
   const queryClient = useQueryClient()
   const [notificationsOpen, setNotificationsOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false)
+  const [registerRepoOpen, setRegisterRepoOpen] = useState(false)
   const notificationRef = useRef<HTMLDivElement>(null)
 
   const { data: notificationsData } = useQuery({
@@ -190,7 +432,6 @@ export function Navbar() {
   const notifications = notificationsData || []
   const unreadCount = notifications.filter((n) => !n.read).length
 
-  // Close notifications on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (notificationRef.current && !notificationRef.current.contains(e.target as Node)) {
@@ -202,18 +443,6 @@ export function Navbar() {
     }
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [notificationsOpen])
-
-  // ⌘K keyboard shortcut
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-        e.preventDefault()
-        setCommandPaletteOpen((prev) => !prev)
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   const markAllRead = async () => {
     await api.post('/notifications/mark-all-read')
@@ -275,25 +504,14 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-3">
-          <a
-            href={process.env.NEXT_PUBLIC_GITHUB_APP_URL || 'https://github.com/apps/orion-qa/installations/new'}
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Register Repo Button */}
+          <button
+            onClick={() => setRegisterRepoOpen(true)}
             className="hidden sm:inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-gradient-to-r from-[#2563eb] to-[#1d4ed8] text-white rounded-lg hover:shadow-lg hover:shadow-blue-500/30 transition-all hover:-translate-y-0.5"
           >
             <GitBranch className="w-4 h-4" />
-            Connect GitHub
-          </a>
-
-          {/* Command Palette
-          <button
-            onClick={() => setCommandPaletteOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-[#6b7280] bg-[#F0F2F5] rounded-md hover:bg-[#E2E8F0] transition-colors"
-            aria-label="Command palette (⌘K)"
-          >
-            <Terminal className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">⌘K</span>
-          </button> */}
+            Register Repo
+          </button>
 
           {/* Notifications */}
           <div className="relative" ref={notificationRef}>
@@ -417,27 +635,27 @@ export function Navbar() {
                   </Link>
                 ))}
                 <hr className="border-[#F0F2F5]" />
-                <a
-                  href={process.env.NEXT_PUBLIC_GITHUB_APP_URL || 'https://github.com/apps/orion-qa/installations/new'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="text-sm font-semibold text-[#2563eb]"
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false)
+                    setRegisterRepoOpen(true)
+                  }}
+                  className="text-sm font-semibold text-[#2563eb] text-left"
                 >
-                  Connect GitHub
-                </a>
+                  Register Repo
+                </button>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </nav>
 
-      {/* Command Palette
+      {/* Register Repo Modal */}
       <AnimatePresence>
-        {commandPaletteOpen && (
-          <CommandPalette open={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
+        {registerRepoOpen && (
+          <RegisterRepoModal open={registerRepoOpen} onClose={() => setRegisterRepoOpen(false)} />
         )}
-      </AnimatePresence> */}
+      </AnimatePresence>
     </>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, use } from 'react'
+import { useState, use, useMemo } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Navbar } from '@/components/Navbar'
@@ -25,18 +25,19 @@ import {
   Sparkles,
   ChevronDown,
   Play,
+  Filter,
 } from 'lucide-react'
 
 interface Finding {
   id: string
   title: string
   detail: string
-  description?: string // alias
+  description?: string
   severity: 'critical' | 'high' | 'medium' | 'low'
   file?: string
-  location?: string // alias
+  location?: string
   fixSuggestion?: string
-  suggestedFix?: string // alias
+  suggestedFix?: string
   codeSnippet?: string
   autoFixable?: boolean
   agent?: string
@@ -81,7 +82,7 @@ interface PageProps {
 }
 
 // ──────────────────────────────────────────────────────────
-// ScoreRing — uses existing getScoreColor from utils
+// Helpers
 // ──────────────────────────────────────────────────────────
 function getScoreHex(score: number): string {
   if (score >= 80) return '#1A7F37'
@@ -199,12 +200,25 @@ function PipelineStepper({ stages }: { stages: PipelineStage[] }) {
 }
 
 // ──────────────────────────────────────────────────────────
+// Severity Filter Pills
+// ──────────────────────────────────────────────────────────
+const SEVERITY_FILTERS = [
+  { label: 'All', value: '', color: '#656D76', bg: '#F0F2F5', countKey: null },
+  { label: 'Critical', value: 'critical', color: '#CF222E', bg: '#FFEBE9', countKey: 'critical' },
+  { label: 'High', value: 'high', color: '#EA580C', bg: '#FFF1E5', countKey: 'high' },
+  { label: 'Medium', value: 'medium', color: '#9A6700', bg: '#FFF8E7', countKey: 'medium' },
+  { label: 'Low', value: 'low', color: '#0969DA', bg: '#F0F6FC', countKey: 'low' },
+  { label: 'Info', value: 'info', color: '#656D76', bg: '#F6F8FA', countKey: 'info' },
+]
+
+// ──────────────────────────────────────────────────────────
 // Main Run Detail Page
 // ──────────────────────────────────────────────────────────
 export default function RunDetailPage({ params }: PageProps) {
   const resolvedParams = use(params)
   const runId = resolvedParams.runId
   const [expandedFindings, setExpandedFindings] = useState<Set<string>>(new Set())
+  const [severityFilter, setSeverityFilter] = useState<string>('')
 
   const {
     data: run,
@@ -271,8 +285,29 @@ export default function RunDetailPage({ params }: PageProps) {
   }
 
   const findings: Finding[] = run.findings || []
-  const criticalFindings = findings.filter((f) => f.severity === 'critical').length
-  const highFindings = findings.filter((f) => f.severity === 'high').length
+
+  // Count findings by severity
+  const severityCounts = useMemo(() => {
+    const counts: Record<'critical' | 'high' | 'medium' | 'low' | 'info', number> = {
+      critical: 0,
+      high: 0,
+      medium: 0,
+      low: 0,
+      info: 0,
+    }
+    findings.forEach((f) => {
+      const sev = f.severity as keyof typeof counts
+      if (counts[sev] !== undefined) counts[sev]++
+    })
+    return counts
+  }, [findings])
+
+  // Filter findings by selected severity
+  const filteredFindings = useMemo(() => {
+    if (!severityFilter) return findings
+    return findings.filter((f) => f.severity === severityFilter)
+  }, [findings, severityFilter])
+
   const score = run.overallScore ?? run.score
   const prNumber = run.prNumber ?? run.ciContext?.pr?.toString()
   const branch = run.branch ?? run.ciContext?.branch
@@ -363,8 +398,10 @@ export default function RunDetailPage({ params }: PageProps) {
                 </div>
                 {findings.length > 0 && (
                   <div className="flex gap-4 text-sm">
-                    {criticalFindings > 0 && <span className="font-bold text-[#CF222E]">{criticalFindings} Critical</span>}
-                    {highFindings > 0 && <span className="font-bold text-[#EA580C]">{highFindings} High</span>}
+                    {severityCounts.critical > 0 && <span className="font-bold text-[#CF222E]">{severityCounts.critical} Critical</span>}
+                    {severityCounts.high > 0 && <span className="font-bold text-[#EA580C]">{severityCounts.high} High</span>}
+                    {severityCounts.medium > 0 && <span className="font-bold text-[#9A6700]">{severityCounts.medium} Medium</span>}
+                    {severityCounts.low > 0 && <span className="font-bold text-[#0969DA]">{severityCounts.low} Low</span>}
                   </div>
                 )}
               </div>
@@ -399,82 +436,140 @@ export default function RunDetailPage({ params }: PageProps) {
             transition={{ delay: 0.2 }}
             className="rounded-2xl border border-blue-100/40 bg-white/60 backdrop-blur-md p-6 md:p-8"
           >
-            <h2 className="bricolage font-bold text-lg text-[#1f2937] mb-6">
-              Issues Found ({findings.length})
-            </h2>
+            {/* Header with filter pills */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <h2 className="bricolage font-bold text-lg text-[#1f2937]">
+                Issues Found ({findings.length})
+              </h2>
 
-            <div className="space-y-3">
-              {findings.map((finding) => (
-                <div
-                  key={finding.id}
-                  className="rounded-xl border border-[#F0F2F5] bg-white overflow-hidden hover:border-blue-200 transition-colors"
-                >
-                  <button
-                    onClick={() => toggleFinding(finding.id)}
-                    className="w-full p-4 text-left flex items-start justify-between gap-4 hover:bg-blue-50/30 transition-colors"
-                  >
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-3 mb-2">
-                        <SeverityBadge severity={finding.severity} />
-                        <h3 className="font-semibold text-[#1f2937]">{finding.title}</h3>
-                      </div>
-                      <p className="text-sm text-[#6b7280] line-clamp-2">{finding.detail || finding.description}</p>
-                      {(finding.file || finding.location) && (
-                        <p className="text-xs text-[#8B949E] font-mono mt-1.5">{finding.file || finding.location}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      {finding.autoFixable && (
-                        <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F0F0FF] text-[#8250DF] text-[11px] font-semibold border border-[#8250DF]/20">
-                          <Sparkles className="w-3 h-3" />
-                          Auto-fixable
+              {/* Severity Filter Pills */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <Filter className="w-4 h-4 text-[#8B949E] shrink-0" />
+                {SEVERITY_FILTERS.map((filter) => {
+                  const isActive = severityFilter === filter.value
+                  const count = filter.value && severityCounts[filter.value as keyof typeof severityCounts] ? severityCounts[filter.value as keyof typeof severityCounts] : null
+
+                  return (
+                    <button
+                      key={filter.value}
+                      onClick={() => setSeverityFilter(filter.value)}
+                      className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all duration-150 ${
+                        isActive
+                          ? 'shadow-sm'
+                          : 'border-transparent hover:bg-[#F0F2F5]'
+                      }`}
+                      style={{
+                        backgroundColor: isActive ? filter.bg : 'transparent',
+                        color: filter.color,
+                        borderColor: isActive ? filter.color + '40' : 'transparent',
+                      }}
+                    >
+                      {filter.label}
+                      {count !== null && (
+                        <span
+                          className="inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full text-[10px] font-bold px-1"
+                          style={{
+                            backgroundColor: isActive ? filter.color : '#F0F2F5',
+                            color: isActive ? '#FFFFFF' : filter.color,
+                          }}
+                        >
+                          {count}
                         </span>
                       )}
-                      <ChevronDown
-                        className={`w-4 h-4 text-[#8B949E] transition-transform ${
-                          expandedFindings.has(finding.id) ? 'rotate-180' : ''
-                        }`}
-                      />
-                    </div>
-                  </button>
-
-                  {expandedFindings.has(finding.id) && (
-                    <div className="border-t border-[#F0F2F5] p-4 bg-[#FAFBFC] space-y-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Description</h4>
-                        <p className="text-sm text-[#6b7280]">{finding.detail || finding.description}</p>
-                      </div>
-
-                      {finding.codeSnippet && (
-                        <div>
-                          <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Code</h4>
-                          <pre className="p-3 rounded-lg bg-[#1f2937] text-xs text-[#e1e8ed] overflow-x-auto border border-[#374151]">
-                            <code>{finding.codeSnippet}</code>
-                          </pre>
-                        </div>
-                      )}
-
-                      {(finding.fixSuggestion || finding.suggestedFix) && (
-                        <div className="p-3 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5]">
-                          <h4 className="text-sm font-semibold text-[#1f2937] mb-1 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-[#8250DF]" />
-                            Suggested Fix
-                          </h4>
-                          <p className="text-sm text-[#6b7280]">{finding.fixSuggestion || finding.suggestedFix}</p>
-                        </div>
-                      )}
-
-                      {finding.autoFixable && (
-                        <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#8250DF] text-white text-sm font-semibold rounded-lg hover:bg-[#6E40C9] transition-colors">
-                          <Sparkles className="w-4 h-4" />
-                          Create Fix PR
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
+                    </button>
+                  )
+                })}
+              </div>
             </div>
+
+            {/* Filtered findings list */}
+            {filteredFindings.length === 0 ? (
+              <div className="text-center py-10">
+                <Filter className="w-8 h-8 text-[#8B949E] mx-auto mb-3" />
+                <p className="text-sm font-medium text-[#656D76]">
+                  No {severityFilter} severity issues found
+                </p>
+                <button
+                  onClick={() => setSeverityFilter('')}
+                  className="text-xs text-[#2563eb] hover:underline mt-2"
+                >
+                  Clear filter
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filteredFindings.map((finding) => (
+                  <div
+                    key={finding.id}
+                    className="rounded-xl border border-[#F0F2F5] bg-white overflow-hidden hover:border-blue-200 transition-colors"
+                  >
+                    <button
+                      onClick={() => toggleFinding(finding.id)}
+                      className="w-full p-4 text-left flex items-start justify-between gap-4 hover:bg-blue-50/30 transition-colors"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <SeverityBadge severity={finding.severity} />
+                          <h3 className="font-semibold text-[#1f2937]">{finding.title}</h3>
+                        </div>
+                        <p className="text-sm text-[#6b7280] line-clamp-2">{finding.detail || finding.description}</p>
+                        {(finding.file || finding.location) && (
+                          <p className="text-xs text-[#8B949E] font-mono mt-1.5">{finding.file || finding.location}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        {finding.autoFixable && (
+                          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#F0F0FF] text-[#8250DF] text-[11px] font-semibold border border-[#8250DF]/20">
+                            <Sparkles className="w-3 h-3" />
+                            Auto-fixable
+                          </span>
+                        )}
+                        <ChevronDown
+                          className={`w-4 h-4 text-[#8B949E] transition-transform ${
+                            expandedFindings.has(finding.id) ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </div>
+                    </button>
+
+                    {expandedFindings.has(finding.id) && (
+                      <div className="border-t border-[#F0F2F5] p-4 bg-[#FAFBFC] space-y-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Description</h4>
+                          <p className="text-sm text-[#6b7280]">{finding.detail || finding.description}</p>
+                        </div>
+
+                        {finding.codeSnippet && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-[#1f2937] mb-1">Code</h4>
+                            <pre className="p-3 rounded-lg bg-[#1f2937] text-xs text-[#e1e8ed] overflow-x-auto border border-[#374151]">
+                              <code>{finding.codeSnippet}</code>
+                            </pre>
+                          </div>
+                        )}
+
+                        {(finding.fixSuggestion || finding.suggestedFix) && (
+                          <div className="p-3 rounded-xl bg-[#F0F6FC] border border-[#C2DBF5]">
+                            <h4 className="text-sm font-semibold text-[#1f2937] mb-1 flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-[#8250DF]" />
+                              Suggested Fix
+                            </h4>
+                            <p className="text-sm text-[#6b7280]">{finding.fixSuggestion || finding.suggestedFix}</p>
+                          </div>
+                        )}
+
+                        {finding.autoFixable && (
+                          <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#8250DF] text-white text-sm font-semibold rounded-lg hover:bg-[#6E40C9] transition-colors">
+                            <Sparkles className="w-4 h-4" />
+                            Create Fix PR
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
           </motion.div>
         ) : run.status === 'complete' ? (
           <motion.div
