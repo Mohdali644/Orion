@@ -362,6 +362,20 @@ export default function DashboardPage() {
                   {(createRunMutation.error as any)?.message || "Failed to start analysis."}
                 </p>
               )}
+              
+              <div className="flex items-center gap-2 mt-8 text-sm text-[#6b7280]">
+                <span>Or</span>
+                <a
+                  href={process.env.NEXT_PUBLIC_GITHUB_APP_URL || "https://github.com/apps/orion-qa-agent/installations/new"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-2.5 bg-[#1F2328] text-white font-semibold rounded-xl hover:bg-[#0F1419] transition-colors inline-flex items-center gap-2 no-underline"
+                >
+                  <Code className="w-4 h-4" />
+                  Install on GitHub
+                </a>
+                <span>for automated CI checks</span>
+              </div>
             </motion.div>
           </section>
 
